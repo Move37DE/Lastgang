@@ -1,0 +1,64 @@
+{
+  "_meta": {
+    "status": "VERIFIED",
+    "verifiziert_durch": "Direkt aus offizieller Netze-BW-Veroeffentlichung extrahiert (PDF gerendert, visuell geprueft).",
+    "warnung_hs": "Netze BW ist Verteilnetzbetreiber bis 110 kV. Hoechstspannung (380/220 kV) faellt unter TransnetBW (UENB). Fuer Anschluesse oberhalb 110 kV bitte TransnetBW-HLZF konsultieren."
+  },
+  "vnb": "Netze BW GmbH",
+  "vnb_kurz": "netze-bw",
+  "antragsjahr": 2026,
+  "quelle_url": "https://assets.cdn.netze-bw.de/xytfb1vrn7of/2xbvzba27IJwe250rd5DmE/f7821823df3bf261de1e55a472b35db2/regelungen-fuer-die-nutzung-des-stromverteilnetzes-2026.pdf",
+  "quelle_dokument": "Regelungen fuer die Nutzung des Stromverteilnetzes der Netze BW GmbH, Gueltig ab 1. Januar 2026, Version 1.1, Stand 12. Dezember 2025, Kap. 4.1.2, Seite 8/19",
+  "quelle_uebersicht_url": "https://www.netze-bw.de/unternehmen/veroeffentlichungen",
+  "abrufdatum": "2026-05-18",
+  "spannungsebenen": {
+    "HS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [
+        { "wochentage": "Mo-Fr", "von": "07:30", "bis": "17:30" }
+      ],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "07:15", "bis": "13:15" },
+        { "wochentage": "Mo-Fr", "von": "15:15", "bis": "19:15" }
+      ]
+    },
+    "HS_MS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [
+        { "wochentage": "Mo-Fr", "von": "15:30", "bis": "17:30" }
+      ],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "07:00", "bis": "13:30" },
+        { "wochentage": "Mo-Fr", "von": "15:00", "bis": "18:30" }
+      ]
+    },
+    "MS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "07:00", "bis": "14:00" },
+        { "wochentage": "Mo-Fr", "von": "16:45", "bis": "19:45" }
+      ]
+    },
+    "MS_NS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "17:00", "bis": "20:45" }
+      ]
+    },
+    "NS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "17:00", "bis": "20:45" }
+      ]
+    }
+  },
+  "anmerkungen": "Quelle gilt fuer das Kalenderjahr 2026 (Basis: Lastgangdaten Sept. 2024 - Aug. 2025) gemaess Beschluss BK4-13-739 der Bundesnetzagentur. Hoechstspannung (380/220 kV) ist NICHT enthalten - Netze BW ist Verteilnetzbetreiber bis 110 kV; fuer HS oberhalb 110 kV ist TransnetBW (UENB fuer BW) zustaendig. Die Tabelle nennt keine Wochentage explizit; die HLZF gelten an Werktagen Mo-Fr. Ausgeschlossen sind: Samstage, Sonntage, in Baden-Wuerttemberg geltende gesetzliche Feiertage, Brueckentage sowie der Zeitraum 24.12.-01.01. - diese Tage gelten ganztaegig als Nebenzeit. 'entfaellt' im Original bedeutet: in dieser Jahreszeit/Ebene gibt es 2026 KEIN Hochlastzeitfenster. Fuer Niederspannung existiert 2026 ein HLZF ausschliesslich im Winter."
+}

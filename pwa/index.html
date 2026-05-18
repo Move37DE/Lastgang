@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lastgang-Analyzer — § 19 Abs. 2 Satz 1 StromNEV</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1f3a5f">
+<style>
+  :root {
+    --bg: #f5f6fa;
+    --card: #ffffff;
+    --primary: #1f3a5f;
+    --primary-light: #3b5d8a;
+    --accent: #2e8b57;
+    --danger: #c0392b;
+    --warn: #b07d04;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --border: #e1e4eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  header h1 { margin: 0; font-size: 1.15rem; font-weight: 600; }
+  header .sub { font-size: 0.8rem; opacity: 0.85; }
+  main {
+    max-width: 900px;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+  }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  h2 { margin-top: 0; color: var(--primary); font-size: 1.2rem; }
+  h3 { color: var(--primary-light); font-size: 1rem; margin-top: 1.2rem; margin-bottom: 0.5rem; }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.25rem;
+    margin-top: 0.8rem;
+  }
+  input, select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+    background: #fafbfc;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    background: #fff;
+  }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) {
+    .row { grid-template-columns: 1fr; }
+  }
+  button {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 0.7rem 1.4rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    margin-top: 1rem;
+  }
+  button:hover { background: var(--primary-light); }
+  button:disabled { background: #aab2c0; cursor: not-allowed; }
+  button.secondary {
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+  }
+  button.secondary:hover { background: var(--bg); }
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 2.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafbfc;
+  }
+  .dropzone:hover, .dropzone.dragging {
+    border-color: var(--primary);
+    background: #f0f4fa;
+  }
+  .dropzone.has-file {
+    border-style: solid;
+    border-color: var(--accent);
+    background: #f0f8f3;
+  }
+  .dropzone .icon { font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--muted); }
+  .filename { font-weight: 500; color: var(--accent); }
+  .badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+  }
+  .badge.pass { background: #e0f3e6; color: #107c10; }
+  .badge.fail { background: #fdeeee; color: #c0392b; }
+  .badge.warn { background: #fdf5e2; color: #b07d04; }
+  .result-banner {
+    padding: 1.2rem;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+  .result-banner.pass { background: #e0f3e6; color: #107c10; }
+  .result-banner.fail { background: #fdeeee; color: #c0392b; }
+  .result-banner.warn { background: #fdf5e2; color: #b07d04; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th { background: #fafbfc; font-weight: 600; color: var(--muted); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .progress {
+    background: #e1e4eb;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 2rem 0;
+  }
+  .progress-bar {
+    background: var(--primary);
+    height: 100%;
+    width: 0;
+    transition: width 0.3s;
+  }
+  .step-list { list-style: none; padding: 0; margin: 1rem 0; }
+  .step-list li {
+    padding: 0.5rem 0;
+    color: var(--muted);
+  }
+  .step-list li.active { color: var(--primary); font-weight: 500; }
+  .step-list li.done { color: var(--accent); }
+  .step-list li::before {
+    content: "○ ";
+    margin-right: 0.5rem;
+  }
+  .step-list li.active::before { content: "● "; }
+  .step-list li.done::before { content: "✓ "; }
+  .error-box {
+    background: #fdeeee;
+    border: 1px solid #f5b3b3;
+    color: var(--danger);
+    padding: 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+  }
+  .info-box {
+    background: #fdf5e2;
+    border: 1px solid #f0d896;
+    color: var(--warn);
+    padding: 0.8rem 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    font-size: 0.88rem;
+  }
+  .grundlage {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .vnb-info {
+    background: #f0f4fa;
+    border-left: 3px solid var(--primary);
+    padding: 0.7rem 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.88rem;
+    border-radius: 0 4px 4px 0;
+  }
+  .vnb-info .muted { color: var(--muted); display: block; margin-top: 0.2rem; }
+  .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Lastgang-Analyzer</h1>
+    <div class="sub">§ 19 Abs. 2 Satz 1 StromNEV — atypische Netznutzung</div>
+  </div>
+</header>
+
+<main>
+  <!-- SCREEN 1: STAMMDATEN -->
+  <section id="screen-stamm" class="screen active">
+    <div class="card">
+      <h2>1. Stammdaten erfassen</h2>
+      <p>Angaben zum Netzanschluss und Antragsjahr.</p>
+
+      <label>Kunde / Anlagenbezeichnung</label>
+      <input type="text" id="kunde" placeholder="z.B. Mustermann GmbH, Werk Stuttgart">
+
+      <h3>Netzanschluss-Adresse</h3>
+      <label>Strasse und Hausnummer</label>
+      <input type="text" id="strasse" placeholder="Hauptstrasse 12">
+
+      <div class="row">
+        <div>
+          <label>PLZ *</label>
+          <input type="text" id="plz" placeholder="70173" maxlength="5" pattern="\d{5}">
+        </div>
+        <div>
+          <label>Ort</label>
+          <input type="text" id="ort" placeholder="Stuttgart">
+        </div>
+      </div>
+
+      <div id="vnb-info" class="vnb-info" style="display:none"></div>
+
+      <div class="row">
+        <div>
+          <label>Spannungsebene *</label>
+          <select id="spannungsebene">
+            <option value="">— bitte waehlen —</option>
+            <option value="HS">Hoechstspannung (HS, &gt; 110 kV)</option>
+            <option value="HS_MS">Umspannung HS/MS</option>
+            <option value="MS" selected>Mittelspannung (MS, 10/20 kV)</option>
+            <option value="MS_NS">Umspannung MS/NS</option>
+            <option value="NS">Niederspannung (NS, 400 V)</option>
+          </select>
+        </div>
+        <div>
+          <label>Antragsjahr *</label>
+          <select id="antragsjahr">
+            <option value="2026" selected>2026</option>
+            <option value="2027">2027</option>
+            <option value="2028">2028 (letztes Antragsjahr)</option>
+            <option value="2025">2025</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Leistungspreis VNB (EUR/kW/Jahr, optional)</label>
+          <input type="number" id="leistungspreis" placeholder="z.B. 120" step="0.01" min="0">
+        </div>
+        <div>
+          <label>Bundesland (Override, optional)</label>
+          <select id="bundesland-override">
+            <option value="">— aus PLZ ableiten —</option>
+            <option value="BW">Baden-Wuerttemberg</option>
+            <option value="BY">Bayern</option>
+            <option value="BE">Berlin</option>
+            <option value="BB">Brandenburg</option>
+            <option value="HB">Bremen</option>
+            <option value="HH">Hamburg</option>
+            <option value="HE">Hessen</option>
+            <option value="MV">Mecklenburg-Vorpommern</option>
+            <option value="NI">Niedersachsen</option>
+            <option value="NW">Nordrhein-Westfalen</option>
+            <option value="RP">Rheinland-Pfalz</option>
+            <option value="SL">Saarland</option>
+            <option value="SN">Sachsen</option>
+            <option value="ST">Sachsen-Anhalt</option>
+            <option value="SH">Schleswig-Holstein</option>
+            <option value="TH">Thueringen</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="btn-zu-upload">Weiter zu Lastgang-Upload →</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 2: UPLOAD -->
+  <section id="screen-upload" class="screen">
+    <div class="card">
+      <h2>2. Lastgang-Datei hochladen</h2>
+      <p>RLM-Lastgang als Excel (.xlsx) oder CSV (.csv) — 15- oder 30-Minuten-Werte.</p>
+
+      <div id="dropzone" class="dropzone">
+        <div class="icon">📂</div>
+        <div id="dropzone-text">
+          <strong>Datei hierher ziehen</strong> oder klicken zum Auswaehlen<br>
+          <small style="color:var(--muted)">Erwartet: Spalte A = Datum/Uhrzeit, Spalte B = Leistung (kW) oder Energie (kWh/Intervall)</small>
+        </div>
+        <input type="file" id="file-input" accept=".xlsx,.xlsm,.csv" hidden>
+      </div>
+
+      <div class="actions">
+        <button class="secondary" id="btn-zurueck-1">← Zurueck</button>
+        <button id="btn-analyse-start" disabled>Analyse starten →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREEN 3: PROGRESS -->
+  <section id="screen-progress" class="screen">
+    <div class="card">
+      <h2>3. Analyse laeuft …</h2>
+      <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
+      <ul class="step-list" id="step-list">
+        <li id="step-1">Lastgang-Datei wird geparst</li>
+        <li id="step-2">VNB-Zuordnung und HLZF-Lookup</li>
+        <li id="step-3">Atypizitaetspruefung</li>
+        <li id="step-4">Pruefbericht wird erzeugt</li>
+      </ul>
+      <div id="progress-error"></div>
+    </div>
+  </section>
+
+  <!-- SCREEN 4: REPORT -->
+  <section id="screen-report" class="screen">
+    <div id="result-banner" class="result-banner"></div>
+
+    <div class="card">
+      <h2>Gesamtbewertung</h2>
+      <div id="hlzf-warning"></div>
+
+      <h3>Stammdaten</h3>
+      <table id="tab-stamm"></table>
+
+      <h3>Lastgang-Kennzahlen</h3>
+      <table id="tab-kennzahlen"></table>
+
+      <h3>Pruefkriterien</h3>
+      <table id="tab-schwellen"></table>
+
+      <h3>Saisonale Auswertung</h3>
+      <table id="tab-saison"></table>
+
+      <h3>Wirtschaftlichkeit</h3>
+      <div id="wirt-box"></div>
+
+      <div class="actions" style="margin-top: 1.5rem;">
+        <a id="btn-docx" class="" href="#" style="display:none">
+          <button>📄 DOCX-Pruefbericht herunterladen</button>
+        </a>
+        <button class="secondary" id="btn-neu">Neue Pruefung starten</button>
+      </div>
+
+      <div class="grundlage" id="grundlage-box"></div>
+    </div>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>

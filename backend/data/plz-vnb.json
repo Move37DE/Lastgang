@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "hinweis": "Vereinfachte PLZ-Bereich-zu-VNB-Zuordnung. Realitaet: ein PLZ-Bereich kann mehrere VNB haben. Phase 1 deckt Baden-Wuerttemberg ab. Vollstaendige Aufloesung via Marktstammdatenregister waere Phase 2.",
+    "stand": "2026-05",
+    "quelle": "Heuristik nach PLZ-Bereich; manuelle Anpassung im Zweifel noetig"
+  },
+  "regeln": [
+    {
+      "bedingung": { "plz_von": "70000", "plz_bis": "79999" },
+      "vnb_kurz": "netze-bw",
+      "vnb_name": "Netze BW GmbH",
+      "bundesland": "BW",
+      "kommentar": "Grosser Teil Baden-Wuerttembergs. Ausnahmen (Stadtwerke Stuttgart, KKL Stuttgart, EnBW-Konzession-Detail) sind nicht abgedeckt."
+    },
+    {
+      "bedingung": { "plz_von": "88000", "plz_bis": "88999" },
+      "vnb_kurz": "netze-bw",
+      "vnb_name": "Netze BW GmbH",
+      "bundesland": "BW",
+      "kommentar": "Oberschwaben/Bodensee — ueberwiegend Netze BW, lokale Stadtwerke koennen abweichen."
+    }
+  ]
+}
