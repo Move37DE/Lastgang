@@ -6,7 +6,10 @@ import { fileURLToPath } from 'node:url';
 import 'dotenv/config';
 
 import { parseLastgang } from './lastgang-parser.js';
-import { resolveVnbAusPlz, ladeHlzf, listeVerfuegbareVnbs } from './vnb-resolver.js';
+import {
+  resolveVnbAusPlz, ladeHlzf, listeVerfuegbareVnbs,
+  ladeTarife, extrahiereTarifeFuerEbene,
+} from './vnb-resolver.js';
 import { pruefAtypizitaet } from './atypizitaet.js';
 import { berechneNetzentgelte } from './netzentgelt.js';
 import { generateDocx } from './report-generator.js';
@@ -54,6 +57,35 @@ app.post('/api/resolve-vnb', async (req, res) => {
     const vnb = await resolveVnbAusPlz(plz);
     if (!vnb) return res.status(404).json({ error: `Kein VNB fuer PLZ ${plz} hinterlegt.` });
     res.json(vnb);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Holt die hinterlegten Tarife fuer (PLZ -> VNB) + Spannungsebene + Antragsjahr.
+// Frontend nutzt das fuer Auto-Befuellung der 4 Tarif-Felder.
+app.post('/api/get-tarife', async (req, res) => {
+  try {
+    const { plz, spannungsebene, antragsjahr } = req.body || {};
+    if (!plz || !spannungsebene || !antragsjahr) {
+      return res.status(400).json({ error: 'plz, spannungsebene und antragsjahr erforderlich' });
+    }
+    const vnb = await resolveVnbAusPlz(plz);
+    if (!vnb) return res.status(404).json({ error: `Kein VNB fuer PLZ ${plz} hinterlegt.` });
+
+    const tarifeDef = await ladeTarife(vnb.vnb_kurz, parseInt(antragsjahr, 10));
+    if (!tarifeDef) {
+      return res.json({ tarife: null, hinweis: `Keine Tarife fuer ${vnb.vnb_kurz} hinterlegt — bitte manuell aus Preisblatt eintragen.` });
+    }
+    const tarife = extrahiereTarifeFuerEbene(tarifeDef, spannungsebene);
+    if (!tarife) {
+      return res.json({
+        tarife: null,
+        hinweis: `Keine Tarife fuer ${vnb.vnb_kurz} / Spannungsebene ${spannungsebene} hinterlegt — bitte manuell eintragen.`,
+        verfuegbare_ebenen: Object.keys(tarifeDef.spannungsebenen),
+      });
+    }
+    res.json({ tarife, hinweis: null });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

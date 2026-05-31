@@ -1,0 +1,39 @@
+{
+  "_meta": {
+    "status": "VERIFIED",
+    "verifiziert_durch": "Direkt aus offiziellem Netze-BW-Preisblatt extrahiert (Preisblatt 1, Seite 2/17). Plausibilitaetscheck gegen 2025er-Anker (UMS/NS Kundenrechnung Hermann Bilz) und unabhaengiges Preisblatt 3 (Monatsleistungspreissystem) bestaetigt die Zeilenzuordnung.",
+    "letzte_aenderung": "2026-05-31",
+    "hinweis_2026": "Werte 2026 deutlich niedriger als 2025 (z.B. UMS/NS LP >=2500: 201,35 -> 146,49 EUR/kW/a, -27 %) wegen Bundeszuschuss von 6,5 Mrd. EUR an UENB nach Paragraph 24c EnWG fuer das Jahr 2026."
+  },
+  "vnb": "Netze BW GmbH",
+  "vnb_kurz": "netze-bw",
+  "antragsjahr": 2026,
+  "gueltig_ab": "2026-01-01",
+  "quelle_url": "https://assets.cdn.netze-bw.de/xytfb1vrn7of/7eQvxehZzn3ECbR9rALmyD/ecc795b9dcd666ce1f53d9d04362a321/netzentgelte-strom-netze-bw-gmbh-2026.pdf",
+  "quelle_dokument": "Endgueltige Preise fuer die Nutzung des Stromverteilnetzes der Netze BW GmbH, gueltig ab 1. Januar 2026 (Version 1.2, Stand 12. Dezember 2025), Preisblatt 1, Seite 2/17",
+  "quelle_uebersicht_url": "https://www.netze-bw.de/unternehmen/veroeffentlichungen",
+  "abrufdatum": "2026-05-31",
+  "spannungsebenen": {
+    "HS": {
+      "lt2500": { "lp_eur_kwa": 16.51, "ap_ct_kwh": 5.27 },
+      "ge2500": { "lp_eur_kwa": 141.51, "ap_ct_kwh": 0.27 }
+    },
+    "HS_MS": {
+      "lt2500": { "lp_eur_kwa": 17.19, "ap_ct_kwh": 5.49 },
+      "ge2500": { "lp_eur_kwa": 147.36, "ap_ct_kwh": 0.28 }
+    },
+    "MS": {
+      "lt2500": { "lp_eur_kwa": 16.61, "ap_ct_kwh": 6.32 },
+      "ge2500": { "lp_eur_kwa": 148.05, "ap_ct_kwh": 1.06 }
+    },
+    "MS_NS": {
+      "lt2500": { "lp_eur_kwa": 16.52, "ap_ct_kwh": 6.26 },
+      "ge2500": { "lp_eur_kwa": 146.49, "ap_ct_kwh": 1.06 }
+    },
+    "NS": {
+      "lt2500": { "lp_eur_kwa": 18.64, "ap_ct_kwh": 7.49 },
+      "ge2500": { "lp_eur_kwa": 171.87, "ap_ct_kwh": 1.36 }
+    }
+  },
+  "anmerkungen": "ENDGUELTIGE Entgelte (nicht vorlaeufig), Version 1.2, Stand 12.12.2025, gueltig ab 01.01.2026. 'HS' meint hier die 110-kV-Ebene des VNB Netze BW; die Hoechstspannung 380/220 kV gehoert zu TransnetBW (UENB) und ist hier NICHT abgebildet. Zusaetzliche Preiskomponenten (nicht in den spannungsebenen-Werten enthalten): Aufschlag Paragraph 19 Abs. 2 StromNEV (Preisblatt 6: A'=1,559 ct/kWh, B'=0,050 ct/kWh, C'=0,025 ct/kWh netto), KWK-Umlage 0,446 ct/kWh, Offshore-Netzumlage 0,941 ct/kWh netto, Konzessionsabgabe Sondervertragskunden 0,11 ct/kWh netto, Messstellenbetrieb (Preisblatt 4/5). Bei Entnahme aus hoeherer Spannungsebene mit Messung auf niedrigerer Ebene gelten Trafoverlust-Aufschlaege: +0,5 % (HS->MS-Messung) bzw. +2,0 % (MS->NS-Messung). Es existiert auch ein Monatsleistungspreissystem (Preisblatt 3) als Alternative zum hier abgebildeten Jahresleistungspreissystem."
+}

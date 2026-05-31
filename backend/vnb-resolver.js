@@ -59,6 +59,61 @@ export async function ladeHlzf(vnbKurz, antragsjahr) {
   }
 }
 
+// Laedt die Netzentgelt-Tarife eines VNB fuer ein Antragsjahr.
+// Gleiche Fallback-Logik wie ladeHlzf (Vorjahr versuchen).
+export async function ladeTarife(vnbKurz, antragsjahr) {
+  const file = path.join(dataDir, 'vnb-tarife', `${vnbKurz}-${antragsjahr}.json`);
+  try {
+    const raw = await fs.readFile(file, 'utf8');
+    return JSON.parse(raw);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      const previous = antragsjahr - 1;
+      try {
+        const fallbackFile = path.join(dataDir, 'vnb-tarife', `${vnbKurz}-${previous}.json`);
+        const raw = await fs.readFile(fallbackFile, 'utf8');
+        const data = JSON.parse(raw);
+        data._fallback = `Tarife fuer ${antragsjahr} nicht vorhanden — verwende ${previous}.`;
+        return data;
+      } catch {
+        return null; // weich: Tarife sind optional, nicht jeder VNB ist hinterlegt
+      }
+    }
+    throw err;
+  }
+}
+
+// Extrahiert die Tarife fuer EINE Spannungsebene als kompaktes Objekt.
+// Liefert null, wenn die Werte nicht hinterlegt sind (Frontend zeigt dann leere Felder).
+export function extrahiereTarifeFuerEbene(tarifeDef, spannungsebene) {
+  if (!tarifeDef || !tarifeDef.spannungsebenen) return null;
+  const ebene = tarifeDef.spannungsebenen[spannungsebene];
+  if (!ebene) return null;
+
+  const lt = ebene.lt2500 || {};
+  const ge = ebene.ge2500 || {};
+  // Wenn alle Werte null sind -> nichts hinterlegt
+  const hatWerte = lt.lp_eur_kwa != null || lt.ap_ct_kwh != null
+                 || ge.lp_eur_kwa != null || ge.ap_ct_kwh != null;
+  if (!hatWerte) return null;
+
+  return {
+    lt2500: (lt.lp_eur_kwa != null && lt.ap_ct_kwh != null)
+      ? { lp_eur_kwa: lt.lp_eur_kwa, ap_ct_kwh: lt.ap_ct_kwh }
+      : null,
+    ge2500: (ge.lp_eur_kwa != null && ge.ap_ct_kwh != null)
+      ? { lp_eur_kwa: ge.lp_eur_kwa, ap_ct_kwh: ge.ap_ct_kwh }
+      : null,
+    quelle: {
+      vnb: tarifeDef.vnb,
+      antragsjahr: tarifeDef.antragsjahr,
+      quelle_url: tarifeDef.quelle_url,
+      status: tarifeDef._meta?.status || 'OK',
+      fallback: tarifeDef._fallback || null,
+    },
+  };
+}
+
 export async function listeVerfuegbareVnbs() {
   const files = await fs.readdir(path.join(dataDir, 'vnb-hlzf'));
   return files

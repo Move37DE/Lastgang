@@ -1,0 +1,38 @@
+{
+  "_meta": {
+    "status": "TEILWEISE_VERIFIED",
+    "verifiziert_durch": "MS_NS-Werte cent-genau aus Kundenrechnung Hermann Bilz GmbH (Berater-Excel, Antragsjahr 2025) verifiziert. Andere Spannungsebenen noch nicht recherchiert.",
+    "letzte_aenderung": "2026-05-31",
+    "hinweis": "2025er Tarife waren systematisch hoeher als 2026er, da der Bundeszuschuss von 6,5 Mrd. EUR (Paragraph 24c EnWG) erst ab 2026 wirkt."
+  },
+  "vnb": "Netze BW GmbH",
+  "vnb_kurz": "netze-bw",
+  "antragsjahr": 2025,
+  "gueltig_ab": "2025-01-01",
+  "quelle_url": null,
+  "quelle_dokument": "Cross-Check aus Kunden-Excel HB_Pruefung Paragraph 19 Abs. 2 S. 1 StromNEV_Prognose.xlsx (Berater Hermann Bilz GmbH, Esslingen)",
+  "abrufdatum": "2026-05-31",
+  "spannungsebenen": {
+    "HS": {
+      "lt2500": { "lp_eur_kwa": null, "ap_ct_kwh": null },
+      "ge2500": { "lp_eur_kwa": null, "ap_ct_kwh": null }
+    },
+    "HS_MS": {
+      "lt2500": { "lp_eur_kwa": null, "ap_ct_kwh": null },
+      "ge2500": { "lp_eur_kwa": null, "ap_ct_kwh": null }
+    },
+    "MS": {
+      "lt2500": { "lp_eur_kwa": null, "ap_ct_kwh": null },
+      "ge2500": { "lp_eur_kwa": null, "ap_ct_kwh": null }
+    },
+    "MS_NS": {
+      "lt2500": { "lp_eur_kwa": 21.79, "ap_ct_kwh": 8.65 },
+      "ge2500": { "lp_eur_kwa": 201.35, "ap_ct_kwh": 1.47 }
+    },
+    "NS": {
+      "lt2500": { "lp_eur_kwa": null, "ap_ct_kwh": null },
+      "ge2500": { "lp_eur_kwa": null, "ap_ct_kwh": null }
+    }
+  },
+  "anmerkungen": "Nur MS_NS hinterlegt — andere Spannungsebenen koennten via Netze-BW-Archiv-PDF 2025 nachgepflegt werden. Fuer 2025er Antraege relevant; fuer 2026 sind die niedrigeren Werte aus netze-bw-2026.json gueltig."
+}

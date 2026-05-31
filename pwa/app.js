@@ -49,6 +49,54 @@ plzInput.addEventListener('blur', async () => {
   }
 });
 
+// Auto-Befuellung der Tarife: wenn PLZ + Spannungsebene + Antragsjahr gesetzt sind,
+// versuche Tarife aus VNB-Datenbank zu ziehen.
+async function maybeAutoFillTarife() {
+  const plz = plzInput.value.trim();
+  const spannungsebene = document.getElementById('spannungsebene').value;
+  const antragsjahr = document.getElementById('antragsjahr').value;
+  if (!/^\d{5}$/.test(plz) || !spannungsebene || !antragsjahr) return;
+
+  try {
+    const res = await fetch('/api/get-tarife', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plz, spannungsebene, antragsjahr }),
+    });
+    const data = await res.json();
+    const hint = document.getElementById('tarif-hinweis');
+
+    if (data.tarife) {
+      const lt = data.tarife.lt2500;
+      const ge = data.tarife.ge2500;
+      // Nur befuellen wenn Feld leer ist (User-Eingaben nicht ueberschreiben)
+      if (lt) {
+        if (!document.getElementById('tarif-lt2500-lp').value) document.getElementById('tarif-lt2500-lp').value = lt.lp_eur_kwa;
+        if (!document.getElementById('tarif-lt2500-ap').value) document.getElementById('tarif-lt2500-ap').value = lt.ap_ct_kwh;
+      }
+      if (ge) {
+        if (!document.getElementById('tarif-ge2500-lp').value) document.getElementById('tarif-ge2500-lp').value = ge.lp_eur_kwa;
+        if (!document.getElementById('tarif-ge2500-ap').value) document.getElementById('tarif-ge2500-ap').value = ge.ap_ct_kwh;
+      }
+      const teilweise = !lt || !ge;
+      const statusBadge = data.tarife.quelle.status === 'VERIFIED' ? '✓ verifiziert'
+                       : data.tarife.quelle.status === 'TEILWEISE_VERIFIED' ? '⚠ teilweise verifiziert'
+                       : '⚠ Platzhalter';
+      hint.innerHTML = `<div class="vnb-info">Tarife automatisch befuellt aus ${data.tarife.quelle.vnb} (${data.tarife.quelle.antragsjahr}) — ${statusBadge}${teilweise ? '. Eine Tarifvariante fehlt — bitte aus Preisblatt ergaenzen.' : '. Werte koennen ueberschrieben werden.'}</div>`;
+      hint.style.display = 'block';
+    } else if (data.hinweis) {
+      hint.innerHTML = `<div class="info-box" style="font-size:0.85rem">${data.hinweis}</div>`;
+      hint.style.display = 'block';
+    }
+  } catch {
+    // schweigend: Tarif-Lookup ist optional
+  }
+}
+
+document.getElementById('spannungsebene').addEventListener('change', maybeAutoFillTarife);
+document.getElementById('antragsjahr').addEventListener('change', maybeAutoFillTarife);
+plzInput.addEventListener('blur', maybeAutoFillTarife);
+
 document.getElementById('btn-zu-upload').addEventListener('click', () => {
   if (!plzInput.value.trim() || !document.getElementById('spannungsebene').value) {
     alert('Bitte mindestens PLZ und Spannungsebene angeben.');
