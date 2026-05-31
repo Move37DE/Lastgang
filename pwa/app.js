@@ -321,6 +321,63 @@ function renderReport(data) {
   ];
   document.getElementById('tab-saison').innerHTML = sRows.join('');
 
+  // HLZF-Lastspitzen + Top-Überschreitungen
+  const lastspitzen = p.hlzf_lastspitzen;
+  if (lastspitzen) {
+    document.getElementById('hlzf-lastspitzen-meta').innerHTML = `
+      Erheblichkeitsschwelle: <strong>${lastspitzen.erheblichkeitsschwelle_kw} kW</strong>
+      (= Pmax × (1 − Atypizitäts-Schwelle der Spannungsebene))
+    `;
+
+    // Top HLZF-Spitzen
+    document.getElementById('hlzf-spitzen-info').innerHTML = `
+      Anzahl HLZF-Intervalle: <strong>${lastspitzen.anzahl_hlzf_intervalle}</strong>
+      · davon ueber Schwelle (= kritisch fuer den Antrag):
+      <strong style="color:${lastspitzen.anzahl_ueberschreitungen_in_hlzf > 0 ? 'var(--danger)' : 'var(--accent)'}">${lastspitzen.anzahl_ueberschreitungen_in_hlzf}</strong>
+    `;
+    if (lastspitzen.top_hlzf_intervalle?.length) {
+      const rows = ['<tr><th>#</th><th>Datum / Uhrzeit</th><th>Jahreszeit</th><th>Leistung (kW)</th><th>Δ zur Schwelle</th><th>Status</th></tr>'];
+      lastspitzen.top_hlzf_intervalle.forEach((iv, i) => {
+        const ueber = iv.ueber_erheblichkeitsschwelle;
+        rows.push(`
+          <tr>
+            <td class="num">${i + 1}</td>
+            <td>${dt(iv.ts)}</td>
+            <td>${iv.jahreszeit}</td>
+            <td class="num"><strong>${iv.leistung_kw}</strong></td>
+            <td class="num">${ueber ? '+' : ''}${iv.ueberschreitung_kw} kW</td>
+            <td><span class="badge ${ueber ? 'fail' : 'pass'}">${ueber ? '⚠ kritisch' : '✓ unter'}</span></td>
+          </tr>
+        `);
+      });
+      document.getElementById('tab-hlzf-spitzen').innerHTML = rows.join('');
+    } else {
+      document.getElementById('tab-hlzf-spitzen').innerHTML = '<tr><td colspan="6" style="color:var(--muted)"><em>Keine HLZF-Intervalle im Auswertungszeitraum.</em></td></tr>';
+    }
+
+    // Top-Überschreitungen gesamt (analog Berater-Excel)
+    document.getElementById('gesamt-ueb-info').innerHTML = `
+      Werte ueber der Erheblichkeitsschwelle im gesamten Jahr (inkl. ausserhalb HLZF, entspricht der Berater-Vorlage).
+      Anzahl gesamt: <strong>${lastspitzen.anzahl_ueberschreitungen_gesamt}</strong>
+    `;
+    if (lastspitzen.top_ueberschreitungen_gesamt?.length) {
+      const rows = ['<tr><th>#</th><th>Datum / Uhrzeit</th><th>Leistung (kW)</th><th>Über Schwelle</th></tr>'];
+      lastspitzen.top_ueberschreitungen_gesamt.forEach((iv, i) => {
+        rows.push(`
+          <tr>
+            <td class="num">${i + 1}</td>
+            <td>${dt(iv.ts)}</td>
+            <td class="num"><strong>${iv.leistung_kw}</strong></td>
+            <td class="num">+${iv.ueberschreitung_kw} kW (+${iv.ueberschreitung_prozent} %)</td>
+          </tr>
+        `);
+      });
+      document.getElementById('tab-gesamt-ueb').innerHTML = rows.join('');
+    } else {
+      document.getElementById('tab-gesamt-ueb').innerHTML = '<tr><td colspan="4" style="color:var(--muted)"><em>Keine Werte ueber der Erheblichkeitsschwelle im Jahr.</em></td></tr>';
+    }
+  }
+
   // Wirtschaftlichkeit
   const w = p.wirtschaftlichkeit || {};
   let wirtHtml = '';

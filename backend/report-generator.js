@@ -64,6 +64,86 @@ function eur(n) {
   return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
 
+function buildHlzfLastspitzenSection(lastspitzen) {
+  if (!lastspitzen) return [];
+
+  const hlzfRows = [
+    [
+      cell('#', { bold: true }),
+      cell('Datum / Uhrzeit', { bold: true }),
+      cell('Jahreszeit', { bold: true }),
+      cell('Leistung (kW)', { bold: true }),
+      cell('Δ zur Schwelle', { bold: true }),
+      cell('Status', { bold: true }),
+    ],
+  ];
+  (lastspitzen.top_hlzf_intervalle || []).forEach((iv, i) => {
+    hlzfRows.push([
+      cell(String(i + 1)),
+      cell(dt(iv.ts)),
+      cell(iv.jahreszeit),
+      cell(String(iv.leistung_kw)),
+      cell(iv.ueber_erheblichkeitsschwelle
+        ? `+${iv.ueberschreitung_kw} kW`
+        : `${iv.ueberschreitung_kw} kW`),
+      cell(iv.ueber_erheblichkeitsschwelle ? '⚠ kritisch' : '✓ unter Schwelle', {
+        bold: iv.ueber_erheblichkeitsschwelle,
+        color: iv.ueber_erheblichkeitsschwelle ? FARBE_FAIL : FARBE_PASS,
+      }),
+    ]);
+  });
+
+  const gesamtRows = [
+    [
+      cell('#', { bold: true }),
+      cell('Datum / Uhrzeit', { bold: true }),
+      cell('Leistung (kW)', { bold: true }),
+      cell('Über Schwelle', { bold: true }),
+    ],
+  ];
+  (lastspitzen.top_ueberschreitungen_gesamt || []).forEach((iv, i) => {
+    gesamtRows.push([
+      cell(String(i + 1)),
+      cell(dt(iv.ts)),
+      cell(String(iv.leistung_kw)),
+      cell(`+${iv.ueberschreitung_kw} kW (+${iv.ueberschreitung_prozent} %)`),
+    ]);
+  });
+
+  const hatHlzfSpitzen = (lastspitzen.top_hlzf_intervalle || []).length > 0;
+  const hatGesamtUeb = (lastspitzen.top_ueberschreitungen_gesamt || []).length > 0;
+
+  return [
+    h('Lastspitzen-Analyse', HeadingLevel.HEADING_1),
+    p(
+      `Erheblichkeitsschwelle: ${lastspitzen.erheblichkeitsschwelle_kw} kW ` +
+      `(= Pmax × (1 − Atypizitäts-Schwelle der Spannungsebene)).`,
+      { italics: true, color: FARBE_GREY },
+    ),
+
+    h('Top-Lastwerte innerhalb der Hochlastzeitfenster', HeadingLevel.HEADING_2),
+    p(
+      `Werte ueber der Erheblichkeitsschwelle innerhalb der HLZF gefaehrden den Antrag. ` +
+      `Anzahl HLZF-Intervalle insgesamt: ${lastspitzen.anzahl_hlzf_intervalle} · ` +
+      `davon ueber Schwelle: ${lastspitzen.anzahl_ueberschreitungen_in_hlzf}`,
+      { bold: true },
+    ),
+    p(''),
+    ...(hatHlzfSpitzen ? [table(hlzfRows), p('')] : [p('— Keine HLZF-Intervalle im Auswertungszeitraum.', { italics: true })]),
+
+    h('Top-Ueberschreitungen im gesamten Jahr', HeadingLevel.HEADING_2),
+    p(
+      `Werte ueber der Erheblichkeitsschwelle ueber das ganze Jahr (inkl. ausserhalb HLZF). ` +
+      `Diese Sicht entspricht der Berater-Vorlage. Anzahl gesamt: ${lastspitzen.anzahl_ueberschreitungen_gesamt}.`,
+      { italics: true, color: FARBE_GREY },
+    ),
+    p(''),
+    ...(hatGesamtUeb
+      ? [table(gesamtRows), p('')]
+      : [p('— Keine Werte ueber der Erheblichkeitsschwelle.', { italics: true })]),
+  ];
+}
+
 function buildNetzentgeltSection(netzentgelt) {
   if (!netzentgelt || !netzentgelt.tarife) return [];
 
@@ -301,6 +381,9 @@ export async function generateDocx(stammdaten, parserResult, pruefung, netzentge
         table(schwellenZeilen),
         h('Saisonale Auswertung', HeadingLevel.HEADING_1),
         table(saisonZeilen),
+
+        // HLZF-Lastspitzen-Liste (analog "Messwerte"-Blatt der Berater-Excel)
+        ...buildHlzfLastspitzenSection(pruefung.hlzf_lastspitzen),
         // Netzentgelt-Sektion (wenn Tarife angegeben) — sonst Fallback Wirtschaftlichkeit
         ...(netzentgelt
           ? buildNetzentgeltSection(netzentgelt)

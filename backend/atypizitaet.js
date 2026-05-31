@@ -114,6 +114,9 @@ export function pruefAtypizitaet(args) {
     winter:    { hlzfStunden: 0, hlzfMax: -Infinity, hlzfMaxTs: null, jhl: -Infinity, jhlTs: null },
   };
 
+  // Sammlung aller HLZF-Intervalle fuer die Top-N-Liste der Lastspitzen
+  const hlzfIntervalle = [];
+
   const intervallStundenFaktor = lastgang.intervall_minuten / 60;
 
   for (const iv of lastgang.intervalle) {
@@ -150,6 +153,7 @@ export function pruefAtypizitaet(args) {
         hlzMax_kw = p;
         hlzMax_ts = ts;
       }
+      hlzfIntervalle.push({ ts, leistung_kw: p, jahreszeit: jz });
     }
   }
 
@@ -212,6 +216,50 @@ export function pruefAtypizitaet(args) {
     };
   }
 
+  // HLZF-Lastspitzen + Erheblichkeitsschwellen-Analyse:
+  //
+  // Erheblichkeitsschwelle = Pmax × (1 − Atypizitäts-Schwelle)
+  //   z.B. MS_NS 30 %: 316,52 × 0,70 = 221,56 kW
+  //
+  // Zwei Sichten:
+  // 1) Überschreitungen INNERHALB der HLZF — gefaehrden den Antrag
+  //    (Last sollte in HLZF gering sein, nicht hoch)
+  // 2) Überschreitungen IM GANZEN JAHR (Berater-Sicht aus Kunden-Excel) —
+  //    Pmax-Tage + ahnlich hohe Werte. Hoch = atypisches Profil bestaetigt.
+  const erhebSchwelleKw = jhl_kw * (1 - schwellen.atypizitaet_prozent / 100);
+  hlzfIntervalle.sort((a, b) => b.leistung_kw - a.leistung_kw);
+  const ueberschreitungenInHlzf = hlzfIntervalle.filter(i => i.leistung_kw > erhebSchwelleKw);
+
+  // Top-Werte im gesamten Jahr (alle Intervalle, nicht nur HLZF)
+  const alleIntervalleSorted = [];
+  for (const iv of lastgang.intervalle) {
+    if (iv.fehlt || iv.leistung_kw == null) continue;
+    if (iv.leistung_kw > erhebSchwelleKw) {
+      alleIntervalleSorted.push({ ts: iv.ts, leistung_kw: iv.leistung_kw });
+    }
+  }
+  alleIntervalleSorted.sort((a, b) => b.leistung_kw - a.leistung_kw);
+
+  const hlzfLastspitzen = {
+    erheblichkeitsschwelle_kw: Math.round(erhebSchwelleKw * 10) / 10,
+    anzahl_hlzf_intervalle: hlzfIntervalle.length,
+    anzahl_ueberschreitungen_in_hlzf: ueberschreitungenInHlzf.length,
+    anzahl_ueberschreitungen_gesamt: alleIntervalleSorted.length,
+    top_hlzf_intervalle: hlzfIntervalle.slice(0, 20).map(i => ({
+      ts: i.ts,
+      leistung_kw: Math.round(i.leistung_kw * 10) / 10,
+      jahreszeit: i.jahreszeit,
+      ueber_erheblichkeitsschwelle: i.leistung_kw > erhebSchwelleKw,
+      ueberschreitung_kw: Math.round((i.leistung_kw - erhebSchwelleKw) * 10) / 10,
+    })),
+    top_ueberschreitungen_gesamt: alleIntervalleSorted.slice(0, 20).map(i => ({
+      ts: i.ts,
+      leistung_kw: Math.round(i.leistung_kw * 10) / 10,
+      ueberschreitung_kw: Math.round((i.leistung_kw - erhebSchwelleKw) * 10) / 10,
+      ueberschreitung_prozent: Math.round((i.leistung_kw / erhebSchwelleKw - 1) * 1000) / 10,
+    })),
+  };
+
   // Saisonale Konsistenz: in wie vielen Jahreszeiten ist die JHL ausserhalb HLZF?
   const saisonal = JAHRESZEITEN.map(({ name }) => {
     const s = jzStats[name];
@@ -267,6 +315,7 @@ export function pruefAtypizitaet(args) {
     schwellen: pruefSchwelle,
     vorhersehbarkeit,
     saisonal,
+    hlzf_lastspitzen: hlzfLastspitzen,
     wirtschaftlichkeit,
     grundlage: {
       rechtsnorm: '§ 19 Abs. 2 Satz 1 StromNEV',
