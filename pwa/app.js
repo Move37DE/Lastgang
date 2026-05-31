@@ -120,6 +120,17 @@ async function startAnalyse() {
     `${document.getElementById('plz').value.trim()} ${document.getElementById('ort').value.trim()}`.trim(),
   ].filter(Boolean);
 
+  // Tarife einsammeln — nur uebergeben wenn alle 4 Werte gesetzt sind oder mind. eine Variante komplett
+  const lpLt = parseFloat(document.getElementById('tarif-lt2500-lp').value);
+  const apLt = parseFloat(document.getElementById('tarif-lt2500-ap').value);
+  const lpGe = parseFloat(document.getElementById('tarif-ge2500-lp').value);
+  const apGe = parseFloat(document.getElementById('tarif-ge2500-ap').value);
+  const tarife = {};
+  if (Number.isFinite(lpLt) && Number.isFinite(apLt)) tarife.lt2500 = { lp_eur_kwa: lpLt, ap_ct_kwh: apLt };
+  if (Number.isFinite(lpGe) && Number.isFinite(apGe)) tarife.ge2500 = { lp_eur_kwa: lpGe, ap_ct_kwh: apGe };
+
+  const weiterleitung = parseFloat(document.getElementById('weiterleitung').value);
+
   const stammdaten = {
     kunde: document.getElementById('kunde').value.trim() || null,
     adresse: adresseTeile.join(', ') || null,
@@ -129,9 +140,9 @@ async function startAnalyse() {
     spannungsebene: document.getElementById('spannungsebene').value,
     antragsjahr: parseInt(document.getElementById('antragsjahr').value, 10),
     bundesland: document.getElementById('bundesland-override').value || null,
-    leistungspreis_eur_pro_kw_a: document.getElementById('leistungspreis').value
-      ? parseFloat(document.getElementById('leistungspreis').value)
-      : null,
+    einheit_override: document.getElementById('einheit-override').value || null,
+    weiterleitung_kwh: Number.isFinite(weiterleitung) ? weiterleitung : null,
+    tarife: Object.keys(tarife).length > 0 ? tarife : null,
   };
 
   const formData = new FormData();
@@ -277,6 +288,60 @@ function renderReport(data) {
     `;
   }
   document.getElementById('wirt-box').innerHTML = wirtHtml;
+
+  // Netzentgelt-Vergleich rendern (wenn Tarife gegeben)
+  const neSection = document.getElementById('netzentgelt-section');
+  if (data.netzentgelt && data.netzentgelt.tarife) {
+    const ne = data.netzentgelt;
+    const e = ne.eingaben;
+    document.getElementById('netzentgelt-eingaben').innerHTML = `
+      Pmax: <strong>${e.pmax_kw} kW</strong> ·
+      Pmax in HLZF: <strong>${e.pmax_hlzf_kw} kW</strong> ·
+      Jahresarbeit: <strong>${(e.jahresarbeit_netto_kwh / 1000).toFixed(0)} MWh</strong> ·
+      VBh: <strong>${e.vollbenutzungsstunden} h</strong>
+    `;
+
+    const eur = (n) => n == null ? '—' : n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+    const neRows = ['<tr><th>Tarif</th><th>LP</th><th>AP</th><th>Allgemein</th><th>Individuell</th><th>Reduktion / Jahr</th></tr>'];
+    for (const [key, t] of Object.entries(ne.tarife)) {
+      if (!t) continue;
+      const label = key === 'lt2500' ? '< 2.500 h' : '≥ 2.500 h';
+      const ist = key === ne.tarif_zugeordnet;
+      neRows.push(`
+        <tr style="${ist ? 'background:#f0f8f3;font-weight:600;' : ''}">
+          <td>${label}${ist ? ' <span class="badge pass">zugeordnet</span>' : ''}</td>
+          <td class="num">${t.lp_eur_kwa} €/kW/a</td>
+          <td class="num">${t.ap_ct_kwh} ct/kWh</td>
+          <td class="num">${eur(t.allgemein_eur)}</td>
+          <td class="num">${eur(t.individuell_effektiv_eur)}</td>
+          <td class="num" style="color:${ist ? '#107c10' : 'inherit'};font-weight:600">${eur(t.reduktion_effektiv_eur)}</td>
+        </tr>
+      `);
+    }
+    document.getElementById('tab-netzentgelt').innerHTML = neRows.join('');
+
+    const hinweise = [];
+    const best = ne.tarife[ne.bester_tarif];
+    if (best) {
+      hinweise.push(`<div class="result-banner pass" style="font-size:1.1rem;padding:0.8rem;">Bester Tarif: <strong>${ne.bester_tarif === 'lt2500' ? '< 2.500 h' : '≥ 2.500 h'}</strong> — Ersparnis ca. <strong>${eur(best.reduktion_effektiv_eur)} / Jahr</strong></div>`);
+    }
+    if (ne.wahloption_empfohlen) {
+      hinweise.push(`<div class="info-box">💡 Wahloption empfohlen: Bei &lt; 2.500 h Vollbenutzung kann der Kunde freiwillig den ≥ 2.500 h Tarif waehlen und damit eine hoehere Reduktion erzielen.</div>`);
+    }
+    for (const [key, t] of Object.entries(ne.tarife)) {
+      if (!t) continue;
+      if (!t.pruefung.bagatelle_erfuellt) {
+        hinweise.push(`<div class="error-box">⚠ Tarif ${key === 'lt2500' ? '< 2.500 h' : '≥ 2.500 h'}: Reduktion unter Bagatellgrenze ${ne.konstanten.bagatelle_eur} €/Jahr — Antrag nicht zulaessig.</div>`);
+      }
+      if (!t.pruefung.mindestentgelt_eingehalten) {
+        hinweise.push(`<div class="info-box">ℹ Tarif ${key === 'lt2500' ? '< 2.500 h' : '≥ 2.500 h'}: Rechnerisches Individuell-Entgelt war unter 20%-Untergrenze — gekappt auf ${eur(t.min_individuell_eur)}.</div>`);
+      }
+    }
+    document.getElementById('netzentgelt-hinweise').innerHTML = hinweise.join('');
+    neSection.style.display = 'block';
+  } else {
+    neSection.style.display = 'none';
+  }
 
   // Download-Button
   const btnDocx = document.getElementById('btn-docx');

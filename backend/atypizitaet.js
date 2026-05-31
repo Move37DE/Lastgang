@@ -249,6 +249,7 @@ export function pruefAtypizitaet(args) {
   return {
     ergebnis: gesamt,
     kennzahlen: {
+      // Anzeigewerte (gerundet)
       jahresenergie_mwh: Math.round(jahresenergie_kwh / 100) / 10,
       jhl_kw: Math.round(jhl_kw * 10) / 10,
       jhl_ts,
@@ -258,6 +259,10 @@ export function pruefAtypizitaet(args) {
       hlz_max_ts: hlzMax_ts,
       delta_p_kw: Math.round(deltaP_kw * 10) / 10,
       atypizitaetsgrad_prozent: Math.round(atypizitaetsgrad_prozent * 10) / 10,
+      // Unverrundete Werte (fuer Folgeberechnungen wie Netzentgelt)
+      jahresenergie_kwh,
+      jhl_kw_raw: jhl_kw,
+      hlz_max_kw_raw: hlzMax_kw,
     },
     schwellen: pruefSchwelle,
     vorhersehbarkeit,

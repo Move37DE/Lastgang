@@ -59,7 +59,94 @@ function table(rows) {
   });
 }
 
-export async function generateDocx(stammdaten, parserResult, pruefung) {
+function eur(n) {
+  if (n == null || !Number.isFinite(n)) return '—';
+  return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+function buildNetzentgeltSection(netzentgelt) {
+  if (!netzentgelt || !netzentgelt.tarife) return [];
+
+  const e = netzentgelt.eingaben;
+  const tarife = netzentgelt.tarife;
+  const variantenZeilen = [
+    [
+      cell('Tarifvariante', { bold: true }),
+      cell('Leistungspreis', { bold: true }),
+      cell('Arbeitspreis', { bold: true }),
+      cell('Allg. Netzentgelt', { bold: true }),
+      cell('Indiv. Netzentgelt', { bold: true }),
+      cell('Reduktion / Jahr', { bold: true }),
+    ],
+  ];
+  for (const [key, t] of Object.entries(tarife)) {
+    if (!t) continue;
+    const label = key === 'lt2500' ? '< 2.500 h' : '≥ 2.500 h';
+    const istZugeordnet = key === netzentgelt.tarif_zugeordnet;
+    variantenZeilen.push([
+      cell(label + (istZugeordnet ? '  (zugeordnet)' : ''), { bold: istZugeordnet }),
+      cell(`${t.lp_eur_kwa} €/kW/a`),
+      cell(`${t.ap_ct_kwh} ct/kWh`),
+      cell(eur(t.allgemein_eur)),
+      cell(eur(t.individuell_effektiv_eur)),
+      cell(eur(t.reduktion_effektiv_eur), {
+        bold: true,
+        color: istZugeordnet ? FARBE_PASS : FARBE_GREY,
+      }),
+    ]);
+  }
+
+  const eingabenParagraphen = [
+    p(`Jahreshöchstlast (Pmax): ${e.pmax_kw} kW` + (e.pmax_bereinigt_kw !== e.pmax_kw
+      ? ` (bereinigt um Weiterleitung: ${e.pmax_bereinigt_kw} kW)` : '')),
+    p(`Höchstlast in HLZF (Pmax_HLZF): ${e.pmax_hlzf_kw} kW`),
+    p(`Jahresarbeit: ${e.jahresarbeit_kwh.toLocaleString('de-DE')} kWh`
+      + (e.weiterleitung_kwh > 0 ? ` (Weiterleitung: ${e.weiterleitung_kwh.toLocaleString('de-DE')} kWh)` : '')),
+    p(`Vollbenutzungsstunden: ${e.vollbenutzungsstunden} h`),
+  ];
+
+  const bewertungParagraphen = [];
+  const besterTarif = tarife[netzentgelt.bester_tarif];
+  if (besterTarif) {
+    bewertungParagraphen.push(p(
+      `Wirtschaftlich bester Tarif: ${netzentgelt.bester_tarif === 'lt2500' ? '< 2.500 h' : '≥ 2.500 h'} — ` +
+      `Reduktion ${eur(besterTarif.reduktion_effektiv_eur)} pro Jahr.`,
+      { bold: true, color: FARBE_PASS, size: 24 },
+    ));
+  }
+  if (netzentgelt.wahloption_empfohlen) {
+    bewertungParagraphen.push(p(
+      'Wahloption empfohlen: Mit < 2.500 h Vollbenutzungsstunden kann der Kunde freiwillig den ≥ 2.500 h Tarif waehlen und damit eine hoehere Reduktion erzielen.',
+      { italics: true, color: FARBE_WARN },
+    ));
+  }
+  for (const [key, t] of Object.entries(tarife)) {
+    if (!t) continue;
+    if (!t.pruefung.bagatelle_erfuellt) {
+      bewertungParagraphen.push(p(
+        `Hinweis (Tarif ${key === 'lt2500' ? '< 2.500 h' : '≥ 2.500 h'}): Reduktion unter Bagatellgrenze (${netzentgelt.konstanten.bagatelle_eur} €/Jahr) — Antrag nicht zulaessig.`,
+        { color: FARBE_FAIL },
+      ));
+    }
+    if (!t.pruefung.mindestentgelt_eingehalten) {
+      bewertungParagraphen.push(p(
+        `Hinweis (Tarif ${key === 'lt2500' ? '< 2.500 h' : '≥ 2.500 h'}): Rechnerisches indiv. Entgelt unter 20 %-Untergrenze — gekappt auf ${eur(t.min_individuell_eur)}.`,
+        { color: FARBE_WARN },
+      ));
+    }
+  }
+
+  return [
+    h('Netzentgelte (vor / nach § 19 Abs. 2 Satz 1 StromNEV)', HeadingLevel.HEADING_1),
+    ...eingabenParagraphen,
+    new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 100 } }),
+    table(variantenZeilen),
+    new Paragraph({ children: [new TextRun({ text: '' })], spacing: { after: 100 } }),
+    ...bewertungParagraphen,
+  ];
+}
+
+export async function generateDocx(stammdaten, parserResult, pruefung, netzentgelt = null) {
   const k = pruefung.kennzahlen || {};
   const ergebnisLabel = {
     'ANSPRUCH_GEGEBEN': 'ANSPRUCH GEGEBEN',
@@ -214,8 +301,11 @@ export async function generateDocx(stammdaten, parserResult, pruefung) {
         table(schwellenZeilen),
         h('Saisonale Auswertung', HeadingLevel.HEADING_1),
         table(saisonZeilen),
-        h('Wirtschaftlichkeit', HeadingLevel.HEADING_1),
-        ...wirtParagraphen,
+        // Netzentgelt-Sektion (wenn Tarife angegeben) — sonst Fallback Wirtschaftlichkeit
+        ...(netzentgelt
+          ? buildNetzentgeltSection(netzentgelt)
+          : [h('Wirtschaftlichkeit', HeadingLevel.HEADING_1), ...wirtParagraphen]
+        ),
         h('Naechste Schritte', HeadingLevel.HEADING_1),
         ...naechsteSchritte,
         h('Rechtliche Grundlage', HeadingLevel.HEADING_1),

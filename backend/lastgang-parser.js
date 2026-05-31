@@ -10,14 +10,23 @@
 import ExcelJS from 'exceljs';
 import fs from 'node:fs/promises';
 
-const ZEITSTEMPEL_KANDIDATEN = [
-  'datum', 'zeit', 'datum/uhrzeit', 'datum / uhrzeit', 'zeitstempel',
-  'timestamp', 'date', 'datetime', 'date/time', 'beginn', 'startzeit',
+// Kombinierte Zeitstempel-Spalten ("Datum/Uhrzeit" in einer Zelle)
+const ZEITSTEMPEL_KOMBI_KANDIDATEN = [
+  'datumuhrzeit', 'datumzeit', 'zeitstempel', 'timestamp', 'datetime',
+  'datetime', 'beginn', 'startzeit', 'startdatum',
 ];
 
+// Nur-Datum-Spalte (kann mit Zeit-Spalte kombiniert werden)
+const DATUM_KANDIDATEN = ['datum', 'date', 'tag'];
+
+// Nur-Uhrzeit-Spalte
+const ZEIT_KANDIDATEN = ['uhrzeit', 'zeit', 'time', 'tageszeit'];
+
 const LEISTUNG_KANDIDATEN = [
-  'leistung', 'wirkleistung', 'p', 'lastgang', 'verbrauch',
-  'wirkenergie', 'energie', 'kw', 'kwh',
+  'leistung', 'wirkleistung', 'lastgang', 'verbrauch',
+  'wirkenergie', 'wirkverbrauch', 'energie',
+  'wert', 'messwert', 'value',
+  'kw', 'kwh', ' p ', '[p]',
 ];
 
 const NUMERISCH_RE = /^-?\d+([,.]\d+)?$/;
@@ -55,6 +64,7 @@ function parseTimestamp(value) {
   }
   if (typeof value !== 'string') return null;
   const s = value.trim();
+  if (!s) return null;
 
   // ISO: 2026-01-15T13:30:00 oder 2026-01-15 13:30
   const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
@@ -115,8 +125,11 @@ function readCsvRows(text) {
 }
 
 // Findet die Header-Zeile + Spaltenindizes fuer Zeitstempel und Leistung.
+// Unterstuetzt drei Layouts:
+//   A) "Datum/Uhrzeit" + "Leistung"          -> tsCol, leistCol
+//   B) "Datum" + "Zeit" + "Wert"             -> tsCol, tsCol2, leistCol  (Datum+Zeit kombinieren)
+//   C) Fallback: Spalte A = Zeitstempel, B = Wert  (kein Header)
 function detectColumns(rows) {
-  // Suche bis Zeile 20 — manche VNB schreiben Metadaten oben drueber.
   const maxHeaderRow = Math.min(20, rows.length);
 
   for (let r = 0; r < maxHeaderRow; r++) {
@@ -124,37 +137,128 @@ function detectColumns(rows) {
     if (!row || row.length < 2) continue;
 
     const headers = row.map(normalizeHeader);
-    let tsCol = -1;
+    let tsKombi = -1;     // einzelne kombinierte Zeitstempel-Spalte
+    let datumCol = -1;    // nur Datum
+    let zeitCol = -1;     // nur Uhrzeit
     let leistCol = -1;
 
     for (let c = 0; c < headers.length; c++) {
       const h = headers[c];
-      if (tsCol < 0 && ZEITSTEMPEL_KANDIDATEN.some(k => h.includes(normalizeHeader(k)))) {
-        tsCol = c;
+      if (!h) continue;
+      // Reihenfolge: kombiniert -> sonst getrennt
+      if (tsKombi < 0 && ZEITSTEMPEL_KOMBI_KANDIDATEN.some(k => h.includes(normalizeHeader(k)))) {
+        tsKombi = c;
+      }
+      if (datumCol < 0 && DATUM_KANDIDATEN.some(k => h === normalizeHeader(k))) {
+        datumCol = c;
+      }
+      if (zeitCol < 0 && ZEIT_KANDIDATEN.some(k => h === normalizeHeader(k))) {
+        zeitCol = c;
       }
       if (leistCol < 0 && LEISTUNG_KANDIDATEN.some(k => h.includes(normalizeHeader(k)))) {
         leistCol = c;
       }
     }
 
-    if (tsCol >= 0 && leistCol >= 0 && tsCol !== leistCol) {
-      return { headerRow: r, tsCol, leistCol, originalHeaders: row.map(h => String(h ?? '')) };
+    // Layout A: kombinierte TS-Spalte + Leistung
+    if (tsKombi >= 0 && leistCol >= 0 && tsKombi !== leistCol) {
+      return {
+        headerRow: r,
+        tsCol: tsKombi,
+        tsCol2: null,
+        leistCol,
+        originalHeaders: row.map(h => String(h ?? '')),
+        layout: 'kombinierter-zeitstempel',
+      };
+    }
+
+    // Layout B: Datum + Zeit + Leistung (drei Spalten)
+    if (datumCol >= 0 && zeitCol >= 0 && leistCol >= 0
+        && datumCol !== zeitCol && datumCol !== leistCol && zeitCol !== leistCol) {
+      return {
+        headerRow: r,
+        tsCol: datumCol,
+        tsCol2: zeitCol,
+        leistCol,
+        originalHeaders: row.map(h => String(h ?? '')),
+        layout: 'datum-zeit-getrennt',
+      };
+    }
+
+    // Layout A-Variante: nur datumCol als Zeitstempel (z.B. wenn der Header nur "Datum" heisst und schon Uhrzeit enthaelt)
+    if (datumCol >= 0 && leistCol >= 0 && datumCol !== leistCol && zeitCol < 0) {
+      // Validiere mit der naechsten Zeile, ob Spalte tatsaechlich Datum+Uhrzeit traegt
+      const dataRow = rows[r + 1];
+      if (dataRow) {
+        const ts = parseTimestamp(dataRow[datumCol]);
+        if (ts && ts.getUTCHours() !== 0 || ts && (rows[r + 2] && parseTimestamp(rows[r + 2][datumCol])?.getUTCHours() !== 0)) {
+          return {
+            headerRow: r,
+            tsCol: datumCol,
+            tsCol2: null,
+            leistCol,
+            originalHeaders: row.map(h => String(h ?? '')),
+            layout: 'datum-mit-uhrzeit',
+          };
+        }
+      }
     }
   }
 
   // Fallback: erste Spalte Zeitstempel, zweite Spalte Leistung.
-  // Validiere mit ein paar Datenzeilen.
   for (let r = 0; r < maxHeaderRow; r++) {
     const row = rows[r];
     if (!row || row.length < 2) continue;
     const ts = parseTimestamp(row[0]);
     const wert = parseGermanNumber(row[1]);
     if (ts && wert != null) {
-      return { headerRow: r - 1 >= 0 ? r - 1 : 0, tsCol: 0, leistCol: 1, originalHeaders: ['Spalte A', 'Spalte B'] };
+      return {
+        headerRow: r - 1 >= 0 ? r - 1 : 0,
+        tsCol: 0,
+        tsCol2: null,
+        leistCol: 1,
+        originalHeaders: ['Spalte A', 'Spalte B'],
+        layout: 'fallback-positionsbasiert',
+      };
     }
   }
 
   throw new Error('Konnte Spalten fuer Zeitstempel und Leistung nicht erkennen.');
+}
+
+// Kombiniert ein Date-Objekt (nur Datum) mit einem Date-Objekt (nur Uhrzeit, Excel-Epoche 1899-12-30).
+function kombiniereDatumUndZeit(datumVal, zeitVal) {
+  const datum = datumVal instanceof Date ? datumVal : parseTimestamp(datumVal);
+  if (!datum) return null;
+
+  let stunden = 0, minuten = 0, sekunden = 0;
+  if (zeitVal instanceof Date) {
+    stunden = zeitVal.getUTCHours();
+    minuten = zeitVal.getUTCMinutes();
+    sekunden = zeitVal.getUTCSeconds();
+  } else if (typeof zeitVal === 'string') {
+    const m = zeitVal.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (m) {
+      stunden = +m[1];
+      minuten = +m[2];
+      sekunden = m[3] ? +m[3] : 0;
+    } else {
+      return null;
+    }
+  } else if (typeof zeitVal === 'number') {
+    // Excel-Anteil: 0..1 entspricht 0..24 Stunden
+    const total = Math.round(zeitVal * 86400);
+    stunden = Math.floor(total / 3600);
+    minuten = Math.floor((total % 3600) / 60);
+    sekunden = total % 60;
+  } else {
+    return null;
+  }
+
+  return new Date(Date.UTC(
+    datum.getUTCFullYear(), datum.getUTCMonth(), datum.getUTCDate(),
+    stunden, minuten, sekunden,
+  ));
 }
 
 // Hauptfunktion: parst eine Lastgang-Datei aus einem Buffer.
@@ -185,8 +289,13 @@ export async function parseLastgang(filename, buffer, options = {}) {
   const intervalle = [];
   for (let r = cols.headerRow + 1; r < rows.length; r++) {
     const row = rows[r];
-    if (!row || !row[cols.tsCol]) continue;
-    const ts = parseTimestamp(row[cols.tsCol]);
+    if (!row || row[cols.tsCol] == null) continue;
+    let ts;
+    if (cols.tsCol2 != null) {
+      ts = kombiniereDatumUndZeit(row[cols.tsCol], row[cols.tsCol2]);
+    } else {
+      ts = parseTimestamp(row[cols.tsCol]);
+    }
     const wert = parseGermanNumber(row[cols.leistCol]);
     if (!ts) continue;
     intervalle.push({ ts, wert_raw: wert });
@@ -210,14 +319,33 @@ export async function parseLastgang(filename, buffer, options = {}) {
   }
 
   // Einheit ermitteln: ist Spalte in kW oder kWh/Intervall?
-  // Heuristik: wenn Header "kWh" enthaelt -> Energie -> umrechnen
+  // Heuristik-Reihenfolge:
+  //  1. Header enthaelt "kWh" -> Energie
+  //  2. Header enthaelt "kW" oder "leistung" -> kW
+  //  3. Header neutral ("Wert", "Messwert", "Verbrauch") + Sheet/Datei deutet auf
+  //     Verbrauchs-Export ("consumption", "verbrauch") -> Energie (kWh/Intervall)
+  //  4. Default: kW
   let einheit = options.einheitHint || 'auto';
+  let einheit_quelle_grund = null;
   if (einheit === 'auto') {
-    const headerText = cols.originalHeaders[cols.leistCol]?.toLowerCase() || '';
+    const headerText = (cols.originalHeaders[cols.leistCol] || '').toLowerCase();
+    const sheetText = (sheetName || '').toLowerCase();
+    const dateiText = (filename || '').toLowerCase();
+    const intervallSuffix = intervallMinuten === 15 ? '/15min' : '/30min';
+
     if (headerText.includes('kwh')) {
-      einheit = intervallMinuten === 15 ? 'kWh/15min' : 'kWh/30min';
-    } else {
+      einheit = 'kWh' + intervallSuffix;
+      einheit_quelle_grund = `Header "${cols.originalHeaders[cols.leistCol]}" enthaelt 'kWh'`;
+    } else if (headerText.includes('kw') || headerText.includes('leistung') || headerText === 'p') {
       einheit = 'kW';
+      einheit_quelle_grund = `Header "${cols.originalHeaders[cols.leistCol]}" deutet auf Leistung`;
+    } else {
+      // Neutraler Header ("Wert", "Messwert" o.ae.) — Default kW.
+      // Wechsel auf kWh/Intervall nur ueber expliziten Hint (UI-Override),
+      // da Verbrauchsportale Lastgaenge ueberwiegend in kW exportieren,
+      // auch wenn der Sheet-Name "consumption"/"verbrauch" suggeriert.
+      einheit = 'kW';
+      einheit_quelle_grund = `Neutraler Header "${cols.originalHeaders[cols.leistCol]}" — Default kW (kein eindeutiger Hinweis auf Energie pro Intervall)`;
     }
   }
 
@@ -258,7 +386,10 @@ export async function parseLastgang(filename, buffer, options = {}) {
       blattname: sheetName,
       header_row: cols.headerRow,
       ts_spalte: cols.originalHeaders[cols.tsCol],
+      ts_spalte_2: cols.tsCol2 != null ? cols.originalHeaders[cols.tsCol2] : null,
       leistung_spalte: cols.originalHeaders[cols.leistCol],
+      layout: cols.layout,
+      einheit_grund: einheit_quelle_grund,
     },
     zeitraum: {
       von: erstes,

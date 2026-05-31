@@ -276,10 +276,6 @@
 
       <div class="row">
         <div>
-          <label>Leistungspreis VNB (EUR/kW/Jahr, optional)</label>
-          <input type="number" id="leistungspreis" placeholder="z.B. 120" step="0.01" min="0">
-        </div>
-        <div>
           <label>Bundesland (Override, optional)</label>
           <select id="bundesland-override">
             <option value="">— aus PLZ ableiten —</option>
@@ -301,6 +297,37 @@
             <option value="TH">Thueringen</option>
           </select>
         </div>
+        <div>
+          <label>Weiterleitung an Dritte (kWh/Jahr, optional)</label>
+          <input type="number" id="weiterleitung" placeholder="0" step="1" min="0">
+        </div>
+      </div>
+
+      <h3>Netzentgelt-Tarife (optional, fuer Wirtschaftlichkeitsberechnung)</h3>
+      <p style="font-size:0.85rem;color:var(--muted);margin-top:-0.5rem">
+        Aus dem Preisblatt des VNB fuer die gewaehlte Spannungsebene. Beide Tarifvarianten eintragen — das Tool waehlt anhand der Vollbenutzungsstunden automatisch und prueft die Wahloption.
+      </p>
+
+      <div class="row">
+        <div>
+          <label>Tarif &lt; 2.500 h — Leistungspreis (€/kW/Jahr)</label>
+          <input type="number" id="tarif-lt2500-lp" placeholder="z.B. 21.79" step="0.01" min="0">
+        </div>
+        <div>
+          <label>Tarif &lt; 2.500 h — Arbeitspreis (ct/kWh)</label>
+          <input type="number" id="tarif-lt2500-ap" placeholder="z.B. 8.65" step="0.01" min="0">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Tarif ≥ 2.500 h — Leistungspreis (€/kW/Jahr)</label>
+          <input type="number" id="tarif-ge2500-lp" placeholder="z.B. 201.35" step="0.01" min="0">
+        </div>
+        <div>
+          <label>Tarif ≥ 2.500 h — Arbeitspreis (ct/kWh)</label>
+          <input type="number" id="tarif-ge2500-ap" placeholder="z.B. 1.47" step="0.01" min="0">
+        </div>
       </div>
 
       <button id="btn-zu-upload">Weiter zu Lastgang-Upload →</button>
@@ -317,10 +344,19 @@
         <div class="icon">📂</div>
         <div id="dropzone-text">
           <strong>Datei hierher ziehen</strong> oder klicken zum Auswaehlen<br>
-          <small style="color:var(--muted)">Erwartet: Spalte A = Datum/Uhrzeit, Spalte B = Leistung (kW) oder Energie (kWh/Intervall)</small>
+          <small style="color:var(--muted)">Erwartet: Spalte A = Datum/Uhrzeit (auch getrennt Datum + Zeit moeglich), Spalte mit Leistung (kW) oder Energie (kWh/Intervall)</small>
         </div>
         <input type="file" id="file-input" accept=".xlsx,.xlsm,.csv" hidden>
       </div>
+
+      <label style="margin-top:1rem">Einheit der Messwert-Spalte</label>
+      <select id="einheit-override">
+        <option value="">Automatisch erkennen (empfohlen)</option>
+        <option value="kW">kW (Leistung, direkt verwenden)</option>
+        <option value="kWh/15min">kWh pro 15-Minuten-Intervall (× 4 fuer kW)</option>
+        <option value="kWh/30min">kWh pro 30-Minuten-Intervall (× 2 fuer kW)</option>
+      </select>
+      <small style="color:var(--muted)">Bei neutralen Headern ("Wert", "Messwert") nimmt das Tool standardmaessig kW an. Wenn der Lastgang in kWh pro Intervall vorliegt, hier explizit waehlen.</small>
 
       <div class="actions">
         <button class="secondary" id="btn-zurueck-1">← Zurueck</button>
@@ -366,6 +402,13 @@
 
       <h3>Wirtschaftlichkeit</h3>
       <div id="wirt-box"></div>
+
+      <div id="netzentgelt-section" style="display:none">
+        <h3>Netzentgelt-Vergleich (vor / nach § 19)</h3>
+        <div id="netzentgelt-eingaben" style="font-size:0.88rem;color:var(--muted);margin-bottom:0.5rem"></div>
+        <table id="tab-netzentgelt"></table>
+        <div id="netzentgelt-hinweise" style="margin-top:0.5rem"></div>
+      </div>
 
       <div class="actions" style="margin-top: 1.5rem;">
         <a id="btn-docx" class="" href="#" style="display:none">
