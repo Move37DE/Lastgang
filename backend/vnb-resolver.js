@@ -42,20 +42,22 @@ export async function ladeHlzf(vnbKurz, antragsjahr) {
     const raw = await fs.readFile(file, 'utf8');
     return JSON.parse(raw);
   } catch (err) {
-    if (err.code === 'ENOENT') {
-      // Fallback: vorheriges Jahr versuchen
-      const previous = antragsjahr - 1;
+    if (err.code !== 'ENOENT') throw err;
+    // Fallback-Suche: zuerst Vorjahr, dann Folgejahr (HLZF aendern sich von
+    // Jahr zu Jahr selten dramatisch, sind aber kein perfekter Ersatz).
+    const kandidaten = [antragsjahr - 1, antragsjahr + 1, antragsjahr - 2, antragsjahr + 2];
+    for (const fallbackJahr of kandidaten) {
+      const fallbackFile = path.join(dataDir, 'vnb-hlzf', `${vnbKurz}-${fallbackJahr}.json`);
       try {
-        const fallbackFile = path.join(dataDir, 'vnb-hlzf', `${vnbKurz}-${previous}.json`);
         const raw = await fs.readFile(fallbackFile, 'utf8');
         const data = JSON.parse(raw);
-        data._fallback = `HLZF fuer ${antragsjahr} nicht vorhanden — verwende ${previous}.`;
+        data._fallback = `HLZF fuer ${antragsjahr} nicht hinterlegt — Naeherung aus ${fallbackJahr}. Vor Antragstellung mit offizieller Veroeffentlichung fuer ${antragsjahr} abgleichen.`;
         return data;
-      } catch {
-        throw new Error(`Keine HLZF-Datei fuer ${vnbKurz} (${antragsjahr} oder ${previous}) gefunden.`);
+      } catch (e) {
+        if (e.code !== 'ENOENT') throw e;
       }
     }
-    throw err;
+    throw new Error(`Keine HLZF-Datei fuer ${vnbKurz} (${antragsjahr} oder Vorjahre/Folgejahre) gefunden.`);
   }
 }
 

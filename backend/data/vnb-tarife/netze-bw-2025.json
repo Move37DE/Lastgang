@@ -1,38 +1,38 @@
 {
   "_meta": {
-    "status": "TEILWEISE_VERIFIED",
-    "verifiziert_durch": "MS_NS-Werte cent-genau aus Kundenrechnung Hermann Bilz GmbH (Berater-Excel, Antragsjahr 2025) verifiziert. Andere Spannungsebenen noch nicht recherchiert.",
-    "letzte_aenderung": "2026-05-31",
-    "hinweis": "2025er Tarife waren systematisch hoeher als 2026er, da der Bundeszuschuss von 6,5 Mrd. EUR (Paragraph 24c EnWG) erst ab 2026 wirkt."
+    "status": "VERIFIED",
+    "verifiziert_durch": "Direkt aus offiziellem Netze-BW-Preisblatt 2025 extrahiert (Preisblatt 1, Version 1.0, Stand 18.12.2024). Plausibilitaets-Anker UMS/NS matched cent-genau gegen Kundenrechnung Hermann Bilz GmbH (alle 4 Werte: 21.79 / 8.65 / 201.35 / 1.47).",
+    "letzte_aenderung": "2026-05-31"
   },
   "vnb": "Netze BW GmbH",
   "vnb_kurz": "netze-bw",
   "antragsjahr": 2025,
   "gueltig_ab": "2025-01-01",
-  "quelle_url": null,
-  "quelle_dokument": "Cross-Check aus Kunden-Excel HB_Pruefung Paragraph 19 Abs. 2 S. 1 StromNEV_Prognose.xlsx (Berater Hermann Bilz GmbH, Esslingen)",
+  "quelle_url": "https://assets.cdn.netze-bw.de/xytfb1vrn7of/7vhTdFhuKlhLpC8BNOgN3e/369f35dc195a3b8890873942bd7df432/netzentgelte-strom-2025.pdf",
+  "quelle_dokument": "Endgueltige Preise fuer die Nutzung des Stromverteilnetzes der Netze BW GmbH, gueltig ab 1. Januar 2025, Version 1.0, Stand 18.12.2024 (Preisblatt 1 - Jahresleistungspreissystem RLM)",
+  "quelle_uebersicht_url": "https://www.netze-bw.de/unternehmen/veroeffentlichungen",
   "abrufdatum": "2026-05-31",
   "spannungsebenen": {
     "HS": {
-      "lt2500": { "lp_eur_kwa": null, "ap_ct_kwh": null },
-      "ge2500": { "lp_eur_kwa": null, "ap_ct_kwh": null }
+      "lt2500": { "lp_eur_kwa": 26.88, "ap_ct_kwh": 8.58 },
+      "ge2500": { "lp_eur_kwa": 230.39, "ap_ct_kwh": 0.44 }
     },
     "HS_MS": {
-      "lt2500": { "lp_eur_kwa": null, "ap_ct_kwh": null },
-      "ge2500": { "lp_eur_kwa": null, "ap_ct_kwh": null }
+      "lt2500": { "lp_eur_kwa": 26.90, "ap_ct_kwh": 8.61 },
+      "ge2500": { "lp_eur_kwa": 231.37, "ap_ct_kwh": 0.43 }
     },
     "MS": {
-      "lt2500": { "lp_eur_kwa": null, "ap_ct_kwh": null },
-      "ge2500": { "lp_eur_kwa": null, "ap_ct_kwh": null }
+      "lt2500": { "lp_eur_kwa": 23.20, "ap_ct_kwh": 9.26 },
+      "ge2500": { "lp_eur_kwa": 216.18, "ap_ct_kwh": 1.54 }
     },
     "MS_NS": {
       "lt2500": { "lp_eur_kwa": 21.79, "ap_ct_kwh": 8.65 },
       "ge2500": { "lp_eur_kwa": 201.35, "ap_ct_kwh": 1.47 }
     },
     "NS": {
-      "lt2500": { "lp_eur_kwa": null, "ap_ct_kwh": null },
-      "ge2500": { "lp_eur_kwa": null, "ap_ct_kwh": null }
+      "lt2500": { "lp_eur_kwa": 23.53, "ap_ct_kwh": 9.44 },
+      "ge2500": { "lp_eur_kwa": 216.54, "ap_ct_kwh": 1.72 }
     }
   },
-  "anmerkungen": "Nur MS_NS hinterlegt — andere Spannungsebenen koennten via Netze-BW-Archiv-PDF 2025 nachgepflegt werden. Fuer 2025er Antraege relevant; fuer 2026 sind die niedrigeren Werte aus netze-bw-2026.json gueltig."
+  "anmerkungen": "Endgueltiges Preisblatt 2025, Version 1.0, Stand 18.12.2024. 'HS' meint hier die 110-kV-Ebene des Verteilnetzes (Netze BW ist VNB, nicht UENB; die 380/220-kV-Hoechstspannung gehoert zu TransnetBW). Alle Preise netto (zzgl. USt). Plausibilitaets-Anker-Check UMS/NS matched cent-genau (21.79 / 8.65 / 201.35 / 1.47). Hinweis: Das Dokument enthaelt einen Vorbehalt bzgl. moeglicher Anpassung bei gesetzlichem Zuschuss zu Netzentgelten 2025 — falls ein solcher Zuschuss spaeter ueber Aenderungspreisblatt umgesetzt wurde, koennten unterjaehrige Werte abweichen. Fuer Antragsfaelle 2025 ist dies das offizielle, endgueltige Stand-01.01.2025-Preisblatt."
 }
