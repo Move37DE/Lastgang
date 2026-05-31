@@ -1,0 +1,67 @@
+{
+  "_meta": {
+    "status": "VERIFIED",
+    "verifiziert_durch": "Direkt aus offizieller Netze-BW-Veroeffentlichung extrahiert (PDF heruntergeladen, mit pdfplumber als strukturierte Tabelle ausgelesen, mit position-basierter Wort-Extraktion gegengeprueft).",
+    "warnung_hs": "Netze BW ist Verteilnetzbetreiber bis 110 kV. Hoechstspannung (380/220 kV) faellt unter TransnetBW (UENB)."
+  },
+  "vnb": "Netze BW GmbH",
+  "vnb_kurz": "netze-bw",
+  "antragsjahr": 2025,
+  "quelle_url": "https://assets.cdn.netze-bw.de/xytfb1vrn7of/01bujLCqkK8CFb4NgKfbnu/12f56b562fab37f09d41cc6924994e3e/regelungen-fuer-die-nutzung-des-stromverteilnetzes-2025.pdf",
+  "quelle_dokument": "Regelungen fuer die Nutzung des Stromverteilnetzes 2025, Version 1.0, Stand 18.12.2024, gueltig ab 1. Januar 2025 (Abschnitt 4.1.2, Seite 8/20)",
+  "quelle_uebersicht_url": "https://www.netze-bw.de/unternehmen/veroeffentlichungen",
+  "abrufdatum": "2026-05-31",
+  "spannungsebenen": {
+    "HS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [
+        { "wochentage": "Mo-Fr", "von": "11:15", "bis": "14:00" },
+        { "wochentage": "Mo-Fr", "von": "16:45", "bis": "18:00" }
+      ],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "07:30", "bis": "15:30" },
+        { "wochentage": "Mo-Fr", "von": "17:15", "bis": "19:15" }
+      ]
+    },
+    "HS_MS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [
+        { "wochentage": "Mo-Fr", "von": "16:45", "bis": "17:30" }
+      ],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "07:30", "bis": "15:45" },
+        { "wochentage": "Mo-Fr", "von": "16:30", "bis": "18:15" }
+      ]
+    },
+    "MS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [
+        { "wochentage": "Mo-Fr", "von": "10:00", "bis": "15:30" },
+        { "wochentage": "Mo-Fr", "von": "16:45", "bis": "17:30" }
+      ],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "07:45", "bis": "17:45" }
+      ]
+    },
+    "MS_NS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "16:45", "bis": "20:30" }
+      ]
+    },
+    "NS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "16:45", "bis": "20:30" }
+      ]
+    }
+  },
+  "anmerkungen": "Quelle: Beschluss BK4-13-739 der BNetzA. HLZF gelten nur an Werktagen Mo-Fr. Ausgeschlossen: Samstage, Sonntage, in Baden-Wuerttemberg geltende gesetzliche Feiertage, Brueckentage sowie 24.12.-01.01. Fruehling (Mrz-Mai) und Sommer (Jun-Aug) entfallen fuer ALLE 5 Spannungsebenen. Im Herbst entfallen die HLZF zusaetzlich fuer MS_NS und NS. Spannungsebenen-Mapping aus dem Originaldokument: HS = 'Hochspannungsnetz' (110 kV), HS_MS = 'Umspannung zur Mittelspannung', MS = 'Mittelspannungsnetz', MS_NS = 'Umspannung zur Niederspannung', NS = 'Niederspannungsnetz'. Wichtiger Unterschied zum 2026er Pendant: MS hat 2025 auch Herbst-HLZF (entfaellt 2026); MS_NS/NS Winter ist 16:45-20:30 (2026: 17:00-20:45)."
+}
