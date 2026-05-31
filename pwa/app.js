@@ -391,11 +391,28 @@ function renderReport(data) {
     neSection.style.display = 'none';
   }
 
-  // Download-Button
+  // Download-Buttons: Pruefbericht + 0..2 Antragsformulare
   const btnDocx = document.getElementById('btn-docx');
   btnDocx.href = data.report_path;
   btnDocx.style.display = 'inline-block';
   btnDocx.setAttribute('download', `pruefbericht-${data.id}.docx`);
+
+  // Antragsformulare als zusaetzliche Buttons rendern
+  const antraegeContainer = document.getElementById('antraege-container');
+  antraegeContainer.innerHTML = '';
+  if (Array.isArray(data.antraege) && data.antraege.length > 0) {
+    for (const a of data.antraege) {
+      const link = document.createElement('a');
+      link.href = a.download_path;
+      link.setAttribute('download', `antrag-${a.variant}-${data.id}.docx`);
+      const btn = document.createElement('button');
+      btn.className = a.empfohlen ? '' : 'secondary';
+      btn.innerHTML = (a.empfohlen ? '⭐ ' : '') + '📋 ' + a.label;
+      btn.title = a.empfohlen ? 'Empfohlene Antragsvariante' : 'Alternative Antragsvariante';
+      link.appendChild(btn);
+      antraegeContainer.appendChild(link);
+    }
+  }
 
   // Grundlage-Box
   const g = p.grundlage || {};

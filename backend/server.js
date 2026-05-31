@@ -13,6 +13,7 @@ import {
 import { pruefAtypizitaet } from './atypizitaet.js';
 import { berechneNetzentgelte } from './netzentgelt.js';
 import { generateDocx } from './report-generator.js';
+import { generateAntragDocx, ermittelAntragsvarianten } from './antrag-generator.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -154,16 +155,41 @@ app.post('/api/analyze', upload.single('lastgang'), async (req, res) => {
       });
     }
 
-    // Report erzeugen
+    // Pruefbericht erzeugen
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const stammdatenAngereichert = { ...stammdaten, vnb_name: vnb.vnb_name, bundesland: bundeslandManuell || vnb.bundesland };
+
     const docxBuffer = await generateDocx(
-      { ...stammdaten, vnb_name: vnb.vnb_name, bundesland: bundeslandManuell || vnb.bundesland },
+      stammdatenAngereichert,
       parserResult,
       pruefung,
       netzentgelt,
     );
     const docxPath = path.join(OUTPUT_DIR, `pruefbericht-${id}.docx`);
     await fs.writeFile(docxPath, docxBuffer);
+
+    // Formale Antragsformulare je passender Tarifvariante (sofern Tarife angegeben)
+    const antraege = [];
+    if (netzentgelt) {
+      const varianten = ermittelAntragsvarianten(netzentgelt);
+      for (const v of varianten) {
+        try {
+          const antragBuffer = await generateAntragDocx(
+            stammdatenAngereichert, parserResult, pruefung, netzentgelt, v.variant,
+          );
+          const antragPath = path.join(OUTPUT_DIR, `antrag-${v.variant}-${id}.docx`);
+          await fs.writeFile(antragPath, antragBuffer);
+          antraege.push({
+            variant: v.variant,
+            label: v.label,
+            empfohlen: v.empfohlen,
+            download_path: `/api/report/antrag-${v.variant}-${id}.docx`,
+          });
+        } catch (err) {
+          console.error(`Antrag ${v.variant} konnte nicht erzeugt werden:`, err.message);
+        }
+      }
+    }
 
     const summary = {
       id,
@@ -184,7 +210,8 @@ app.post('/api/analyze', upload.single('lastgang'), async (req, res) => {
       },
       pruefung,
       netzentgelt,
-      report_path: `/api/report/${id}.docx`,
+      report_path: `/api/report/pruefbericht-${id}.docx`,
+      antraege,
     };
 
     analysen.set(id, { summary, docxPath });
@@ -219,6 +246,19 @@ app.post('/api/analyze', upload.single('lastgang'), async (req, res) => {
 app.get('/api/report/:filename', async (req, res) => {
   const fname = path.basename(req.params.filename);
   const fpath = path.join(OUTPUT_DIR, fname);
+  try {
+    await fs.access(fpath);
+    res.download(fpath);
+  } catch {
+    res.status(404).json({ error: 'Report nicht gefunden.' });
+  }
+});
+
+// Legacy-Route: alte Pruefbericht-URL ohne "pruefbericht-" Praefix
+app.get('/api/report/:id.docx', async (req, res, next) => {
+  const id = req.params.id;
+  if (id.startsWith('pruefbericht-') || id.startsWith('antrag-')) return next();
+  const fpath = path.join(OUTPUT_DIR, `pruefbericht-${id}.docx`);
   try {
     await fs.access(fpath);
     res.download(fpath);
