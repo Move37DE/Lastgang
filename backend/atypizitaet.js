@@ -14,6 +14,7 @@ import { istHlzfWerktag, nebenzeitDatenFuer, ymd } from './feiertage.js';
 
 // BNetzA BK4-13-739 Erheblichkeitsschwellen
 const ERHEBLICHKEITSSCHWELLEN = {
+  HOES_HS: { atypizitaet_prozent: 20, mindest_verlagerung_kw: 100, bagatelle_eur: 500 },
   HS:    { atypizitaet_prozent: 20, mindest_verlagerung_kw: 100, bagatelle_eur: 500 },
   HS_MS: { atypizitaet_prozent: 20, mindest_verlagerung_kw: 100, bagatelle_eur: 500 },
   MS:    { atypizitaet_prozent: 20, mindest_verlagerung_kw: 100, bagatelle_eur: 500 },

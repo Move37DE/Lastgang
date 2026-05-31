@@ -1,0 +1,42 @@
+{
+  "_meta": {
+    "status": "VERIFIED",
+    "verifiziert_durch": "Direkt aus offiziellem Bayernwerk-Preisblatt 2026 extrahiert (S. 3/20, Abschnitt 'Jahresleistungspreis - Preisblatt LG JLP', gueltig ab 01.01.2026). Tabelle mit pdfplumber + y-clustering ausgelesen, pdftotext-Crosscheck bestaetigt die Werte.",
+    "letzte_aenderung": "2026-05-31"
+  },
+  "vnb": "Bayernwerk Netz GmbH",
+  "vnb_kurz": "bayernwerk",
+  "antragsjahr": 2026,
+  "gueltig_ab": "2026-01-01",
+  "quelle_url": "https://www.bayernwerk-netz.de/content/dam/revu-global/bayernwerk-netz/files/netz/netzzugang/netzentgeltestrom/bayernwerk-preisblatt-netzentgelte-2026.pdf",
+  "quelle_dokument": "Preisblatt Netzentgelte Strom - Jahresleistungspreis - Preisblatt LG JLP (S. 3 von 20), gueltig ab 01. Januar 2026",
+  "quelle_uebersicht_url": "https://www.bayernwerk-netz.de/de/bayernwerk-netz-gmbh/netzinformation/netzentgelte/individuelle-netzentgelte.html",
+  "abrufdatum": "2026-05-31",
+  "spannungsebenen": {
+    "HOES_HS": {
+      "lt2500": { "lp_eur_kwa": 17.18, "ap_ct_kwh": 2.81 },
+      "ge2500": { "lp_eur_kwa": 76.70, "ap_ct_kwh": 0.43 }
+    },
+    "HS": {
+      "lt2500": { "lp_eur_kwa": 11.02, "ap_ct_kwh": 3.65 },
+      "ge2500": { "lp_eur_kwa": 99.06, "ap_ct_kwh": 0.13 }
+    },
+    "HS_MS": {
+      "lt2500": { "lp_eur_kwa": 12.45, "ap_ct_kwh": 3.99 },
+      "ge2500": { "lp_eur_kwa": 107.32, "ap_ct_kwh": 0.20 }
+    },
+    "MS": {
+      "lt2500": { "lp_eur_kwa": 15.86, "ap_ct_kwh": 4.01 },
+      "ge2500": { "lp_eur_kwa": 99.17, "ap_ct_kwh": 0.68 }
+    },
+    "MS_NS": {
+      "lt2500": { "lp_eur_kwa": 17.61, "ap_ct_kwh": 5.88 },
+      "ge2500": { "lp_eur_kwa": 159.96, "ap_ct_kwh": 0.18 }
+    },
+    "NS": {
+      "lt2500": { "lp_eur_kwa": 20.11, "ap_ct_kwh": 5.01 },
+      "ge2500": { "lp_eur_kwa": 97.66, "ap_ct_kwh": 1.91 }
+    }
+  },
+  "anmerkungen": "Werte netto (zzgl. USt). Alle 6 Spannungsebenen verifiziert. HOES_HS-Schluessel konsistent mit HLZF-Datei. Auffaellig: NS LP ge2500 (97,66 EUR/kW/a) ist kleiner als MS_NS (159,96) und MS (99,17) — kein Tippfehler, so im Originaldokument. Auffaellig: AP ge2500 bei MS_NS (0,18 ct/kWh) und HS (0,13 ct/kWh) sehr niedrig. Kalkulation gem. StromNEV und Festlegung BK8-24-001-A (EE-Mehrkosten-Verteilung). Netzbetreiber behaelt sich unterjaehrige Anpassungen vor, falls BNetzA neue Erloesobergrenze festsetzt."
+}

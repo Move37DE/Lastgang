@@ -1,0 +1,82 @@
+{
+  "_meta": {
+    "status": "VERIFIED",
+    "verifiziert_durch": "Direkt aus offizieller Bayernwerk-Veroeffentlichung extrahiert. Tabelle mit pdfplumber + position-basierter y-Koordinaten-Extraktion ausgelesen (kein fehleranfaelliger pdftotext-Layout-Reparatur-Schritt).",
+    "warnung_hs": "Bayernwerk Netz GmbH betreibt 110-kV-Hochspannung. Die Hoechstspannung (380/220 kV) gehoert zu TenneT (UENB). Die zusaetzliche Ebene HOES_HS ist die Umspannebene zwischen TenneTs Hoechstspannung und Bayernwerks Hochspannung."
+  },
+  "vnb": "Bayernwerk Netz GmbH",
+  "vnb_kurz": "bayernwerk",
+  "antragsjahr": 2026,
+  "quelle_url": "https://www.bayernwerk-netz.de/content/dam/revu-global/bayernwerk-netz/files/netz/netzzugang/individuelle-netzentgelte/bayernwerk-hochlastzeitfenster-2026.pdf",
+  "quelle_dokument": "Hochlastzeitfenster fuer 2026 nach Paragraph 19 Abs. 2 Satz 1 StromNEV — Bayernwerk Netz GmbH, Stand 10/2025",
+  "quelle_uebersicht_url": "https://www.bayernwerk-netz.de/de/bayernwerk-netz-gmbh/netzinformation/netzentgelte/individuelle-netzentgelte.html",
+  "abrufdatum": "2026-05-31",
+  "spannungsebenen": {
+    "HOES_HS": {
+      "fruehling": [
+        { "wochentage": "Mo-Fr", "von": "18:00", "bis": "18:30" },
+        { "wochentage": "Mo-Fr", "von": "19:00", "bis": "19:15" }
+      ],
+      "sommer": [],
+      "herbst": [
+        { "wochentage": "Mo-Fr", "von": "07:00", "bis": "08:15" },
+        { "wochentage": "Mo-Fr", "von": "14:15", "bis": "19:15" }
+      ],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "07:00", "bis": "09:15" },
+        { "wochentage": "Mo-Fr", "von": "15:30", "bis": "19:45" }
+      ]
+    },
+    "HS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [
+        { "wochentage": "Mo-Fr", "von": "16:45", "bis": "18:15" }
+      ],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "07:15", "bis": "10:00" },
+        { "wochentage": "Mo-Fr", "von": "16:00", "bis": "19:00" }
+      ]
+    },
+    "HS_MS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [
+        { "wochentage": "Mo-Fr", "von": "07:45", "bis": "09:00" },
+        { "wochentage": "Mo-Fr", "von": "14:30", "bis": "19:00" }
+      ],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "07:15", "bis": "10:00" },
+        { "wochentage": "Mo-Fr", "von": "16:00", "bis": "19:00" }
+      ]
+    },
+    "MS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [
+        { "wochentage": "Mo-Fr", "von": "17:30", "bis": "18:00" }
+      ],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "07:15", "bis": "09:15" },
+        { "wochentage": "Mo-Fr", "von": "16:45", "bis": "19:15" }
+      ]
+    },
+    "MS_NS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "17:00", "bis": "19:00" }
+      ]
+    },
+    "NS": {
+      "fruehling": [],
+      "sommer": [],
+      "herbst": [],
+      "winter": [
+        { "wochentage": "Mo-Fr", "von": "17:00", "bis": "19:15" }
+      ]
+    }
+  },
+  "anmerkungen": "Bayernwerk publiziert HLZF fuer 6 Netz-/Umspannebenen (statt 5 bei Netze BW): HOES_HS (Umspannung Hoechst-/Hochspannung), HS (110 kV), HS_MS, MS, MS_NS, NS. Reine Hoechstspannung (380/220 kV) wird von TenneT betrieben. Sommer entfaellt auf allen Ebenen. Fruehling nur HOES_HS belegt. Werktagsregelung: Mo-Fr ohne Samstag. Brueckentage 2026 explizit: 02.01., 05.01., 15.05., 05.06. Werktage 24.12.2026-31.12.2026 ebenfalls ausgenommen. Feiertage gem. in Bayern (Bezugsort Muenchen) geltenden gesetzlichen Feiertagen. Hinweis zur Lese-Konvention laut PDF: '07:30 – 08:45 Uhr' bedeutet 07:30:00 bis 08:44:59 (bis-Zeit exklusiv). Agent erwaehnte VNB-spezifische Erheblichkeitsschwellen (HOES/HS+HS = 10 % statt 20 %) — das ist NICHT BNetzA-konform und im Tool aktuell nicht uebernommen (Standard-Schwellen BK4-13-739 gelten). Vor Antragstellung mit aktuellem Preisblatt verifizieren."
+}

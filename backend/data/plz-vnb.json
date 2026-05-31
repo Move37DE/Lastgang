@@ -18,6 +18,27 @@
       "vnb_name": "Netze BW GmbH",
       "bundesland": "BW",
       "kommentar": "Oberschwaben/Bodensee — ueberwiegend Netze BW, lokale Stadtwerke koennen abweichen."
+    },
+    {
+      "bedingung": { "plz_von": "80000", "plz_bis": "87999" },
+      "vnb_kurz": "bayernwerk",
+      "vnb_name": "Bayernwerk Netz GmbH",
+      "bundesland": "BY",
+      "kommentar": "Oberbayern/Schwaben (E.ON-Tochter). Ausnahmen: Stadtwerke Muenchen (80000-81999/85221+), Stadtwerke Augsburg, Stadtwerke Ingolstadt — diese haben eigene Netzentgelte."
+    },
+    {
+      "bedingung": { "plz_von": "90000", "plz_bis": "96499" },
+      "vnb_kurz": "bayernwerk",
+      "vnb_name": "Bayernwerk Netz GmbH",
+      "bundesland": "BY",
+      "kommentar": "Franken (Ober-/Mittel-/Unterfranken). Ausnahmen: N-ERGIE Nuernberg (90402-90491), Stadtwerke Wuerzburg (97070-97084), Stadtwerke Bamberg, Stadtwerke Aschaffenburg."
+    },
+    {
+      "bedingung": { "plz_von": "92000", "plz_bis": "94999" },
+      "vnb_kurz": "bayernwerk",
+      "vnb_name": "Bayernwerk Netz GmbH",
+      "bundesland": "BY",
+      "kommentar": "Oberpfalz / Niederbayern. Ausnahmen: Stadtwerke Regensburg, Stadtwerke Landshut."
     }
   ]
 }
