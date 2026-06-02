@@ -1,0 +1,14 @@
+{
+  "name": "lastgang-analyzer",
+  "version": "0.2.0",
+  "description": "Pruefung des Anspruchs auf individuelles Netzentgelt nach Paragraph 19 Abs. 2 Satz 1 StromNEV",
+  "private": true,
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "postinstall": "npm install --prefix backend --omit=dev"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
