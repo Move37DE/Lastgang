@@ -124,11 +124,77 @@ function readCsvRows(text) {
   });
 }
 
+// Erkennt einen Metadaten-Block am Anfang einer VNB-Export-Datei (Key/Value-Zeilen
+// vor den Daten). Liefert extrahierte Stammdaten (Einheit, OBIS, Lokation/MaLo)
+// und die Zeile, ab der die Daten anfangen.
+//
+// Typisches Format (MSCONS-derived, EnerCom-Export, viele VNB):
+//   Z1: "Medium (Strom,Wasser,Gas,...)"  | "Strom"
+//   Z2: "Einheit (kWh,m,l,...)"          | "kWh"
+//   Z3: "Lokation"                        | "51481608004"
+//   Z4: "OBIS-Kennziffer"                 | "1-1:1.29.0"
+//   Z5+: <Datum>                          | <Zahl>
+function detectMetadataBlock(rows) {
+  const maxScan = Math.min(15, rows.length);
+  const metadata = {};
+  let datenStartZeile = -1;
+
+  for (let r = 0; r < maxScan; r++) {
+    const row = rows[r];
+    if (!row || row.length < 2) continue;
+
+    const keyRaw = String(row[0] ?? '').trim();
+    const valRaw = row[1];
+    const keyNorm = normalizeHeader(keyRaw);
+
+    // Datenzeile? Spalte A = Datum, Spalte B = Zahl
+    const tsCheck = parseTimestamp(row[0]);
+    const numCheck = parseGermanNumber(row[1]);
+    if (tsCheck && numCheck != null) {
+      datenStartZeile = r;
+      break;
+    }
+
+    // Bekannte Metadaten-Keys erkennen (case-insensitive, robust gegen Klammerinhalte)
+    if (/einheit/.test(keyNorm)) {
+      metadata.einheit_text = String(valRaw ?? '').trim();
+    } else if (/obis/.test(keyNorm)) {
+      metadata.obis = String(valRaw ?? '').trim();
+    } else if (/^(lokation|malo|marktlokation|messlokation|mess?stelle)$/.test(keyNorm)) {
+      metadata.lokation = String(valRaw ?? '').trim();
+    } else if (/^medium$/.test(keyNorm)) {
+      metadata.medium = String(valRaw ?? '').trim();
+    } else if (/^(zaehler|zaehlpunkt|zaehlernummer)/.test(keyNorm)) {
+      metadata.zaehlpunkt = String(valRaw ?? '').trim();
+    }
+  }
+
+  return { metadata, datenStartZeile };
+}
+
+// Leitet aus Metadaten + OBIS-Code die Einheit pro Intervall ab.
+// OBIS 1-1:1.x.0 = Wirkenergiebezug, immer pro Intervall (kWh/Intervall, NICHT kW).
+// OBIS 1-1:21.x.0 = Wirkleistung (kW), sehr selten in 15-Min-Exporten.
+function einheitAusMetadata(metadata, intervallMinuten) {
+  if (!metadata) return null;
+  const intervallSuffix = intervallMinuten === 15 ? '/15min' : '/30min';
+  const einheit = String(metadata.einheit_text || '').toLowerCase();
+  const obis = String(metadata.obis || '');
+
+  if (/^kwh$/i.test(einheit) || obis.match(/^1-1:1\.\d+\.0/)) {
+    return { einheit: 'kWh' + intervallSuffix, grund: `Metadaten-Block: Einheit "${metadata.einheit_text}"${obis ? `, OBIS ${obis} (Energie pro Intervall)` : ''}` };
+  }
+  if (/^kw$/i.test(einheit) || obis.match(/^1-1:21\.\d+\.0/)) {
+    return { einheit: 'kW', grund: `Metadaten-Block: Einheit "${metadata.einheit_text}"${obis ? `, OBIS ${obis} (Momentanleistung)` : ''}` };
+  }
+  return null;
+}
+
 // Findet die Header-Zeile + Spaltenindizes fuer Zeitstempel und Leistung.
 // Unterstuetzt drei Layouts:
 //   A) "Datum/Uhrzeit" + "Leistung"          -> tsCol, leistCol
 //   B) "Datum" + "Zeit" + "Wert"             -> tsCol, tsCol2, leistCol  (Datum+Zeit kombinieren)
-//   C) Fallback: Spalte A = Zeitstempel, B = Wert  (kein Header)
+//   C) Fallback: Spalte A = Zeitstempel, B = Wert  (kein Header, mit/ohne Metadaten-Block)
 function detectColumns(rows) {
   const maxHeaderRow = Math.min(20, rows.length);
 
@@ -206,6 +272,7 @@ function detectColumns(rows) {
   }
 
   // Fallback: erste Spalte Zeitstempel, zweite Spalte Leistung.
+  // (greift z.B. bei MSCONS-Exports mit Metadaten-Block oben)
   for (let r = 0; r < maxHeaderRow; r++) {
     const row = rows[r];
     if (!row || row.length < 2) continue;
@@ -217,8 +284,8 @@ function detectColumns(rows) {
         tsCol: 0,
         tsCol2: null,
         leistCol: 1,
-        originalHeaders: ['Spalte A', 'Spalte B'],
-        layout: 'fallback-positionsbasiert',
+        originalHeaders: ['Datum/Uhrzeit', 'Wert'],
+        layout: r > 0 ? 'metadaten-block-oben' : 'fallback-positionsbasiert',
       };
     }
   }
@@ -283,6 +350,9 @@ export async function parseLastgang(filename, buffer, options = {}) {
     throw new Error(`Datei enthaelt zu wenige Zeilen (${rows?.length ?? 0}) — Lastgang braucht 17.520 oder 35.040 Werte/Jahr.`);
   }
 
+  // Metadaten-Block (z.B. MSCONS-derived) vor den eigentlichen Daten erkennen
+  const meta = detectMetadataBlock(rows);
+
   const cols = detectColumns(rows);
 
   // Datenzeilen einlesen
@@ -320,32 +390,37 @@ export async function parseLastgang(filename, buffer, options = {}) {
 
   // Einheit ermitteln: ist Spalte in kW oder kWh/Intervall?
   // Heuristik-Reihenfolge:
+  //  0. Metadaten-Block (MSCONS-Style): explizit "Einheit: kWh" oder OBIS-Code
   //  1. Header enthaelt "kWh" -> Energie
   //  2. Header enthaelt "kW" oder "leistung" -> kW
-  //  3. Header neutral ("Wert", "Messwert", "Verbrauch") + Sheet/Datei deutet auf
-  //     Verbrauchs-Export ("consumption", "verbrauch") -> Energie (kWh/Intervall)
-  //  4. Default: kW
+  //  3. Header neutral ("Wert", "Messwert") -> Default kW
   let einheit = options.einheitHint || 'auto';
   let einheit_quelle_grund = null;
   if (einheit === 'auto') {
-    const headerText = (cols.originalHeaders[cols.leistCol] || '').toLowerCase();
-    const sheetText = (sheetName || '').toLowerCase();
-    const dateiText = (filename || '').toLowerCase();
-    const intervallSuffix = intervallMinuten === 15 ? '/15min' : '/30min';
-
-    if (headerText.includes('kwh')) {
-      einheit = 'kWh' + intervallSuffix;
-      einheit_quelle_grund = `Header "${cols.originalHeaders[cols.leistCol]}" enthaelt 'kWh'`;
-    } else if (headerText.includes('kw') || headerText.includes('leistung') || headerText === 'p') {
-      einheit = 'kW';
-      einheit_quelle_grund = `Header "${cols.originalHeaders[cols.leistCol]}" deutet auf Leistung`;
+    // 0) Aus Metadaten-Block (hoechste Prioritaet)
+    const aus_meta = einheitAusMetadata(meta.metadata, intervallMinuten);
+    if (aus_meta) {
+      einheit = aus_meta.einheit;
+      einheit_quelle_grund = aus_meta.grund;
     } else {
-      // Neutraler Header ("Wert", "Messwert" o.ae.) — Default kW.
-      // Wechsel auf kWh/Intervall nur ueber expliziten Hint (UI-Override),
-      // da Verbrauchsportale Lastgaenge ueberwiegend in kW exportieren,
-      // auch wenn der Sheet-Name "consumption"/"verbrauch" suggeriert.
-      einheit = 'kW';
-      einheit_quelle_grund = `Neutraler Header "${cols.originalHeaders[cols.leistCol]}" — Default kW (kein eindeutiger Hinweis auf Energie pro Intervall)`;
+      // 1-3) Header-basiert
+      const headerText = (cols.originalHeaders[cols.leistCol] || '').toLowerCase();
+      const intervallSuffix = intervallMinuten === 15 ? '/15min' : '/30min';
+
+      if (headerText.includes('kwh')) {
+        einheit = 'kWh' + intervallSuffix;
+        einheit_quelle_grund = `Header "${cols.originalHeaders[cols.leistCol]}" enthaelt 'kWh'`;
+      } else if (headerText.includes('kw') || headerText.includes('leistung') || headerText === 'p') {
+        einheit = 'kW';
+        einheit_quelle_grund = `Header "${cols.originalHeaders[cols.leistCol]}" deutet auf Leistung`;
+      } else {
+        // Neutraler Header ("Wert", "Messwert" o.ae.) — Default kW.
+        // Wechsel auf kWh/Intervall nur ueber expliziten Hint (UI-Override),
+        // da Verbrauchsportale Lastgaenge ueberwiegend in kW exportieren,
+        // auch wenn der Sheet-Name "consumption"/"verbrauch" suggeriert.
+        einheit = 'kW';
+        einheit_quelle_grund = `Neutraler Header "${cols.originalHeaders[cols.leistCol]}" — Default kW (kein eindeutiger Hinweis auf Energie pro Intervall)`;
+      }
     }
   }
 
@@ -390,6 +465,7 @@ export async function parseLastgang(filename, buffer, options = {}) {
       leistung_spalte: cols.originalHeaders[cols.leistCol],
       layout: cols.layout,
       einheit_grund: einheit_quelle_grund,
+      metadata: Object.keys(meta.metadata).length > 0 ? meta.metadata : null,
     },
     zeitraum: {
       von: erstes,
